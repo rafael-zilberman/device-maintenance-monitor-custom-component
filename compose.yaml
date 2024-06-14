@@ -1,0 +1,21 @@
+version: '3.0'
+
+services:
+  homeassistant:
+    container_name: homeassistant
+    image: "homeassistant/homeassistant:latest"
+    restart: unless-stopped
+    environment:
+      - TZ=Asia/Jerusalem
+    volumes:
+      - config-volume:/config:rw
+      - ./custom_components/device_maintenance_monitor:/config/custom_components/device_maintenance_monitor:rw
+      - /run/dbus:/run/dbus:ro
+      - /etc/localtime:/etc/localtime:ro
+    privileged: true
+    ports:
+      - "8123:8123"
+
+volumes:
+  config-volume:
+    driver: local

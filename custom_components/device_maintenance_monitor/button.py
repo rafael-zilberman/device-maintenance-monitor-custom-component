@@ -1,42 +1,41 @@
-from homeassistant.components.button import ButtonEntity
+import logging
+from dataclasses import dataclass
+
+from homeassistant.components.button import ButtonEntity, ButtonEntityDescription
 from homeassistant.core import HomeAssistant
-from datetime import datetime
-from .const import DOMAIN, CONF_DEVICE
+
+from .const import DOMAIN
+from .device_binding import bind_config_entry_to_device
+from .logics import MaintenanceLogic
+
+_LOGGER = logging.getLogger(__name__)
 
 
 async def async_setup_entry(hass: HomeAssistant, entry, async_add_entities):
-    data = hass.data[DOMAIN][entry.entry_id]
-    device = data[CONF_DEVICE]
+    _LOGGER.info(f"Setting up entry {entry.entry_id} (button)")
+    bind_config_entry_to_device(hass, entry)
 
-    async_add_entities([ResetDeviceMaintenanceMonitorButton(hass, device)])
+    logic: MaintenanceLogic = hass.data[DOMAIN][entry.entry_id]
+    async_add_entities([
+        ResetMaintenanceButtonEntity(logic)
+    ])
 
 
-class ResetDeviceMaintenanceMonitorButton(ButtonEntity):
-    def __init__(self, hass, device):
-        self._hass = hass
-        self._device = device
+@dataclass(frozen=True, kw_only=True)
+class MaintenanceButtonEntityDescription(ButtonEntityDescription):
+    """Class describing button entities."""
 
-    @property
-    def name(self):
-        return f"{self._device} Reset Device Maintenance Monitor"
 
-    async def async_added_to_hass(self):
-        self._last_maintenance_sensor = f"sensor.{self._device}_last_device_maintenance_date"
-        self._total_hours_sensor = f"sensor.{self._device}_total_device_running_hours"
-        self._average_hours_sensor = f"sensor.{self._device}_average_usage_hours_per_day"
+class ResetMaintenanceButtonEntity(ButtonEntity):
+    def __init__(self, logic: MaintenanceLogic):
+        self._logic = logic
+        self.entity_description = MaintenanceButtonEntityDescription(
+            key="reset_maintenance",
+            has_entity_name=True,
+            translation_key="reset_maintenance",
+        )
+        self._attr_unique_id = f"{logic.source_entity_id}_reset_maintenance"
 
     async def async_press(self):
         # Reset the device maintenance monitor metrics
-        await self._reset_last_replacement_date()
-        await self._reset_total_running_hours()
-        await self._reset_average_usage_hours_per_day()
-
-    async def _reset_last_replacement_date(self):
-        new_date = datetime.now().strftime('%Y-%m-%d')
-        await self._hass.states.async_set(self._last_maintenance_sensor, new_date)
-
-    async def _reset_total_running_hours(self):
-        await self._hass.states.async_set(self._total_hours_sensor, '0')
-
-    async def _reset_average_usage_hours_per_day(self):
-        await self._hass.states.async_set(self._average_hours_sensor, '0')
+        pass

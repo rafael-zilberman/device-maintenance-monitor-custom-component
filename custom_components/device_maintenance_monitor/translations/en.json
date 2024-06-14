@@ -1,18 +1,86 @@
 {
-  "config_flow": {
-    "step": {
-      "title": "Device Maintenance Monitor Configuration",
-      "device": {
-        "title": "Select Device",
-        "error": "Please select a device."
-      },
-      "hours": {
-        "title": "Enter runtime Hours before Maintenance needed",
-        "error": "Please enter a valid number of hours."
+  "entity": {
+    "binary_sensor": {
+      "maintenance_needed": {
+        "name": "Maintenance needed"
       }
     },
+    "sensor": {
+      "last_maintenance_date": {
+        "name": "Last maintenance date"
+      }
+    },
+    "button": {
+      "reset_maintenance": {
+        "name": "Reset"
+      }
+    }
+  },
+  "config": {
+    "abort": {
+      "already_configured": "Device is already configured",
+      "no_source_entity": "No source entity specified"
+    },
     "error": {
-      "unknown": "An unknown error occurred. Please try again."
+      "unknown": "Unknown error occurred, please see the logs for additional information"
+    },
+    "step": {
+      "user": {
+        "data": {
+          "sensor_type": "Sensor type"
+        },
+        "menu_options": {
+          "runtime": "Runtime",
+          "count": "Count",
+          "fixed_interval": "Fixed interval"
+        },
+        "title": "Choose your sensor type"
+      },
+      "runtime": {
+        "data": {
+          "entity_id": "Source entity",
+          "name": "Name",
+          "unique_id": "Unique id",
+          "interval": "Interval"
+        },
+        "data_description": {
+          "entity_id": "Entity the maintenance monitor is tracking, the maintenance monitor will listen to state changes of this entity to be updated",
+          "name": "Leaving blank will take the name from the source entity",
+          "unique_id": "Specify a unique_id. This will allow to setup multiple maintenance monitors for the same entity. When not specified it will take the unique_id of the source entity",
+          "interval": "The amount of time the device has been powered on between each maintenance"
+        },
+        "title": "Create a hourly maintenance monitor"
+      },
+      "count": {
+        "data": {
+          "entity_id": "Source entity",
+          "name": "Name",
+          "unique_id": "Unique id",
+          "count": "Count"
+        },
+        "data_description": {
+          "entity_id": "Entity the maintenance monitor is tracking, the maintenance monitor will listen to state changes of this entity to be updated",
+          "name": "Leaving blank will take the name from the source entity",
+          "unique_id": "Specify a unique_id. This will allow to setup multiple maintenance monitors for the same entity. When not specified it will take the unique_id of the source entity",
+          "count": "The amount of actions on counts between each maintenance"
+        },
+        "title": "Create a power on count maintenance monitor"
+      },
+      "fixed_interval": {
+        "data": {
+          "entity_id": "Source entity",
+          "name": "Name",
+          "unique_id": "Unique id",
+          "interval": "Interval"
+        },
+        "data_description": {
+          "entity_id": "Entity the maintenance monitor is tracking, the maintenance monitor will listen to state changes of this entity to be updated",
+          "name": "Leaving blank will take the name from the source entity",
+          "unique_id": "Specify a unique_id. This will allow to setup multiple maintenance monitors for the same entity. When not specified it will take the unique_id of the source entity",
+          "interval": "The amount of time between each maintenance"
+        },
+        "title": "Create a fixed interval maintenance monitor"
+      }
     }
   }
 }
