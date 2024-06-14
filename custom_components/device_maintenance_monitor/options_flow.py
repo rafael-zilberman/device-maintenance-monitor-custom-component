@@ -10,7 +10,7 @@ DATA_SCHEMA = vol.Schema({
 })
 
 
-class HVACFilterOptionsFlowHandler(config_entries.OptionsFlow):
+class DeviceMaintenanceMonitorOptionsFlowHandler(config_entries.OptionsFlow):
 
     def __init__(self, config_entry):
         self.config_entry = config_entry

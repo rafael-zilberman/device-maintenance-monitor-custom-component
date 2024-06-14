@@ -1,0 +1,6 @@
+reset_device_maintenance_monitor:
+  description: "Reset the device running hours"
+  fields:
+    entity_id:
+      description: "Entity to reset"
+      example: "sensor.device_maintenance_monitor"

@@ -1,6 +1,0 @@
-reset_filter:
-  description: "Reset the filter running hours"
-  fields:
-    entity_id:
-      description: "Entity to reset"
-      example: "sensor.hvac_filter"

@@ -1,13 +1,13 @@
 {
   "config_flow": {
     "step": {
-      "title": "HVAC Filter Replacement Configuration",
+      "title": "Device Maintenance Monitor Configuration",
       "device": {
-        "title": "Select HVAC Device",
-        "error": "Please select an HVAC device."
+        "title": "Select Device",
+        "error": "Please select a device."
       },
       "hours": {
-        "title": "Enter Hours before Filter Replacement",
+        "title": "Enter runtime Hours before Maintenance needed",
         "error": "Please enter a valid number of hours."
       }
     },

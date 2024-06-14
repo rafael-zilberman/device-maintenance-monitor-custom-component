@@ -5,7 +5,7 @@ from homeassistant.helpers.translation import gettext
 from .const import DOMAIN, CONF_DEVICE, CONF_HOURS
 
 
-class HVACFilterConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
+class DeviceMaintenanceMonitorConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
     async def async_step_user(self, user_input=None):
         errors = {}
 

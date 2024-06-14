@@ -13,14 +13,14 @@ async def async_setup_entry(hass: HomeAssistant, entry, async_add_entities):
     hours = data[CONF_HOURS]
 
     async_add_entities([
-        LastFilterReplacementDateSensor(hass, device),
-        TotalFilterRunningHoursSensor(hass, device),
-        RemainingHoursUntilFilterChangeSensor(hass, device, hours),
+        LastDeviceMaintenanceDateSensor(hass, device),
+        TotalDeviceRunningHoursSensor(hass, device),
+        RemainingHoursUntilDeviceMaintenanceSensor(hass, device, hours),
         AverageUsageHoursPerDaySensor(hass, device),
     ])
 
 
-class LastFilterReplacementDateSensor(SensorEntity, RestoreEntity):
+class LastDeviceMaintenanceDateSensor(SensorEntity, RestoreEntity):
     def __init__(self, hass, device):
         self._hass = hass
         self._device = device
@@ -28,7 +28,7 @@ class LastFilterReplacementDateSensor(SensorEntity, RestoreEntity):
 
     @property
     def name(self):
-        return f"{self._device} Last Filter Replacement Date"
+        return f"{self._device} Last Device Maintenance Date"
 
     @property
     def state(self):
@@ -45,7 +45,7 @@ class LastFilterReplacementDateSensor(SensorEntity, RestoreEntity):
         pass
 
 
-class TotalFilterRunningHoursSensor(SensorEntity, RestoreEntity):
+class TotalDeviceRunningHoursSensor(SensorEntity, RestoreEntity):
     def __init__(self, hass, device):
         self._hass = hass
         self._device = device
@@ -55,7 +55,7 @@ class TotalFilterRunningHoursSensor(SensorEntity, RestoreEntity):
 
     @property
     def name(self):
-        return f"{self._device} Total Filter Running Hours"
+        return f"{self._device} Total Device Running Hours"
 
     @property
     def state(self):
@@ -85,7 +85,7 @@ class TotalFilterRunningHoursSensor(SensorEntity, RestoreEntity):
         pass
 
 
-class RemainingHoursUntilFilterChangeSensor(SensorEntity):
+class RemainingHoursUntilDeviceMaintenanceSensor(SensorEntity):
     def __init__(self, hass, device, hours):
         self._hass = hass
         self._device = device
@@ -94,11 +94,11 @@ class RemainingHoursUntilFilterChangeSensor(SensorEntity):
 
     @property
     def name(self):
-        return f"{self._device} Remaining Hours Until Filter Change"
+        return f"{self._device} Remaining Hours Until Device Maintenance"
 
     @property
     def state(self):
-        total_hours_sensor = self._hass.states.get(f"sensor.{self._device}_total_filter_running_hours")
+        total_hours_sensor = self._hass.states.get(f"sensor.{self._device}_total_device_running_hours")
         if total_hours_sensor:
             total_hours = float(total_hours_sensor.state)
             remaining_hours = self._hours - total_hours
@@ -122,7 +122,7 @@ class AverageUsageHoursPerDaySensor(SensorEntity, RestoreEntity):
 
     @property
     def state(self):
-        total_hours_sensor = self._hass.states.get(f"sensor.{self._device}_total_filter_running_hours")
+        total_hours_sensor = self._hass.states.get(f"sensor.{self._device}_total_device_running_hours")
         if total_hours_sensor:
             total_hours = float(total_hours_sensor.state)
             self._state = total_hours / self._total_days
@@ -135,8 +135,8 @@ class AverageUsageHoursPerDaySensor(SensorEntity, RestoreEntity):
 
     def update(self):
         # Update the total days since the last replacement
-        last_replacement_sensor = self._hass.states.get(f"sensor.{self._device}_last_filter_replacement_date")
-        if last_replacement_sensor:
-            last_replacement_date = datetime.strptime(last_replacement_sensor.state, '%Y-%m-%d')
+        last_maintenance_sensor = self._hass.states.get(f"sensor.{self._device}_last_device_maintenance_date")
+        if last_maintenance_sensor:
+            last_replacement_date = datetime.strptime(last_maintenance_sensor.state, '%Y-%m-%d')
             self._total_days = (datetime.now() - last_replacement_date).days or 1
         self.async_write_ha_state()

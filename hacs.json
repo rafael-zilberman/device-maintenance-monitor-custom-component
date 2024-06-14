@@ -1,6 +1,6 @@
 {
-    "name": "HVAC Filter Monitor",
-    "filename": "filter-schedule.zip",
+    "name": "Device Maintenance Monitor",
+    "filename": "device-maintenance-monitor.zip",
     "hide_default_branch": true,
     "homeassistant": "2024.3.3",
     "render_readme": true,

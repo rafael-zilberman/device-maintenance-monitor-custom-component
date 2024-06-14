@@ -8,10 +8,10 @@ async def async_setup_entry(hass: HomeAssistant, entry, async_add_entities):
     device = data[CONF_DEVICE]
     hours = data[CONF_HOURS]
 
-    async_add_entities([FilterNeedsReplacementBinarySensor(hass, device, hours)])
+    async_add_entities([DeviceNeedsMaintenanceBinarySensor(hass, device, hours)])
 
 
-class FilterNeedsReplacementBinarySensor(BinarySensorEntity):
+class DeviceNeedsMaintenanceBinarySensor(BinarySensorEntity):
     def __init__(self, hass, device, hours):
         self._hass = hass
         self._device = device
@@ -21,14 +21,14 @@ class FilterNeedsReplacementBinarySensor(BinarySensorEntity):
 
     @property
     def name(self):
-        return f"{self._device} Filter Needs Replacement"
+        return f"{self._device} Device Needs Maintenance"
 
     @property
     def is_on(self):
         return self._state
 
     async def async_added_to_hass(self):
-        self._total_hours_sensor = f"sensor.{self._device}_total_filter_running_hours"
+        self._total_hours_sensor = f"sensor.{self._device}_total_device_running_hours"
         self._state = await self._calculate_state()
         self.async_on_remove(
             self._hass.states.async_track_state_change(
