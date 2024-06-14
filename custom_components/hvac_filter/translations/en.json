@@ -1,0 +1,19 @@
+{
+  "config_flow": {
+    "step": {
+      "title": "HVAC Filter Replacement Configuration",
+      "device": {
+        "title": "Select HVAC Device",
+        "error": "Please select an HVAC device."
+      },
+      "hours": {
+        "title": "Enter Hours before Filter Replacement",
+        "error": "Please enter a valid number of hours."
+      }
+    },
+    "error": {
+      "unknown": "An unknown error occurred. Please try again."
+    }
+  }
+}
+
