@@ -10,7 +10,7 @@ from homeassistant.helpers.restore_state import RestoreEntity
 from homeassistant.helpers.typing import StateType
 
 from .const import CONF_ENTITY_ID, DOMAIN
-from .device_binding import bind_config_entry_to_device
+from .device_binding import get_device_info
 from .logics import MaintenanceLogic
 from .sensors import MaintenanceSensor
 
@@ -23,7 +23,6 @@ async def async_setup_entry(
         async_add_entities: AddEntitiesCallback,
 ) -> None:
     _LOGGER.info(f"Setting up entry {entry.entry_id} (sensors)")
-    bind_config_entry_to_device(hass, entry)
 
     logic: MaintenanceLogic = hass.data[DOMAIN][entry.entry_id]
     entities_to_add = [
@@ -46,7 +45,8 @@ class MaintenanceSensorEntity(SensorEntity, RestoreEntity):
             has_entity_name=True,
             translation_key=sensor.key,
         )
-        self._attr_unique_id = f"{sensor.source_entity_id}_{sensor.key}"
+        self._attr_unique_id = sensor.id
+        self._attr_device_info = get_device_info(sensor.source_entity)
 
     @property
     def native_value(self) -> StateType:

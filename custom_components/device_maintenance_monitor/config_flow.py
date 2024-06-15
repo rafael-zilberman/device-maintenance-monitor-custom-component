@@ -153,7 +153,10 @@ class ConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
         }
 
         # Set unique_id to prevent duplicate entries:
-        await self.async_set_unique_id(f"maintenance_monitor_{source_entity.unique_id}")
+        source_unique_id = (
+                source_entity.unique_id or source_entity_id
+        )
+        await self.async_set_unique_id(f"maintenance_monitor_{source_unique_id}")
         self._abort_if_unique_id_configured()
 
         return self.async_create_entry(title=str(name), data=sensor_config)

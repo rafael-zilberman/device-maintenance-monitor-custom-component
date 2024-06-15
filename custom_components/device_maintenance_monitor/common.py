@@ -1,9 +1,12 @@
+import logging
 from typing import NamedTuple
 
 import homeassistant.helpers.device_registry as dr
 import homeassistant.helpers.entity_registry as er
 from homeassistant.components.light import ATTR_SUPPORTED_COLOR_MODES, ColorMode
 from homeassistant.core import HomeAssistant, split_entity_id
+
+_LOGGER = logging.getLogger(__name__)
 
 
 class SourceEntity(NamedTuple):

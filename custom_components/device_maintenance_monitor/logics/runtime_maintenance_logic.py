@@ -1,8 +1,8 @@
 from dataclasses import dataclass
 
-from custom_components.device_maintenance_monitor.const import SensorType, CONF_INTERVAL
-from custom_components.device_maintenance_monitor.logics import MaintenanceData, MaintenanceLogic
-from custom_components.device_maintenance_monitor.sensors import LastMaintenanceDateSensor
+from ..const import SensorType, CONF_INTERVAL, CONF_ENTITY_ID, CONF_NAME
+from .base_maintenance_logic import MaintenanceData, MaintenanceLogic
+from ..sensors import LastMaintenanceDateSensor
 
 
 @dataclass
@@ -15,7 +15,8 @@ class RuntimeMaintenanceLogic(MaintenanceLogic):
 
     def _get_logic_data(self, data: dict) -> MaintenanceData:
         return RuntimeMaintenanceData(
-            entity_id=data.get("entity_id"),
+            entity_id=data.get(CONF_ENTITY_ID),
+            name=data.get(CONF_NAME),
             hours_interval=data.get(CONF_INTERVAL),
         )
 

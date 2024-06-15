@@ -4,8 +4,8 @@ from dataclasses import dataclass
 from homeassistant.components.binary_sensor import BinarySensorEntity, BinarySensorEntityDescription
 from homeassistant.core import HomeAssistant
 
+from .device_binding import get_device_info
 from .const import DOMAIN
-from .device_binding import bind_config_entry_to_device
 from .logics import MaintenanceLogic
 
 _LOGGER = logging.getLogger(__name__)
@@ -13,8 +13,6 @@ _LOGGER = logging.getLogger(__name__)
 
 async def async_setup_entry(hass: HomeAssistant, entry, async_add_entities):
     _LOGGER.info(f"Setting up entry {entry.entry_id} (binary sensors)")
-    bind_config_entry_to_device(hass, entry)
-
     logic: MaintenanceLogic = hass.data[DOMAIN][entry.entry_id]
     async_add_entities([
         MaintenanceNeededBinarySensorEntity(logic)
@@ -34,7 +32,8 @@ class MaintenanceNeededBinarySensorEntity(BinarySensorEntity):
             has_entity_name=True,
             translation_key="maintenance_needed",
         )
-        self._attr_unique_id = f"{logic.source_entity_id}_maintenance_needed"
+        self._attr_unique_id = f"{logic.source_entity.entity_id}_maintenance_needed"
+        self._attr_device_info = get_device_info(logic.source_entity)
 
     @property
     def is_on(self):
