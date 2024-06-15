@@ -27,7 +27,7 @@ async def async_setup_entry(
     logic: MaintenanceLogic = hass.data[DOMAIN][entry.entry_id]
     entities_to_add = [
         MaintenanceSensorEntity(sensor)
-        for sensor in logic.get_sensors()
+        for sensor in logic.sensors
     ]
     _LOGGER.info(f"Adding entities ({len(entities_to_add)}): {entities_to_add}")
     async_add_entities(entities_to_add)
@@ -41,6 +41,8 @@ class MaintenanceSensorEntityDescription(SensorEntityDescription):
 class MaintenanceSensorEntity(SensorEntity, RestoreEntity):
     def __init__(self, sensor: MaintenanceSensor):
         self.entity_description = MaintenanceSensorEntityDescription(
+            device_class=sensor.device_class,
+            native_unit_of_measurement=sensor.unit_of_measurement,
             key=sensor.key,
             has_entity_name=True,
             translation_key=sensor.key,
@@ -48,6 +50,16 @@ class MaintenanceSensorEntity(SensorEntity, RestoreEntity):
         self._attr_unique_id = sensor.id
         self._attr_device_info = get_device_info(sensor.source_entity)
 
+        self._sensor = sensor
+
     @property
-    def native_value(self) -> StateType:
-        return "Hello"
+    def state(self):
+        return self._sensor.state
+
+    async def async_added_to_hass(self):
+        last_state = await self.async_get_last_state()
+        if last_state:
+            self._sensor.restore_state(last_state.state)
+
+    def update(self):
+        pass

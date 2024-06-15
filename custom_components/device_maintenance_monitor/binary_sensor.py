@@ -1,7 +1,8 @@
 import logging
 from dataclasses import dataclass
 
-from homeassistant.components.binary_sensor import BinarySensorEntity, BinarySensorEntityDescription
+from homeassistant.components.binary_sensor import BinarySensorEntity, BinarySensorEntityDescription, \
+    BinarySensorDeviceClass
 from homeassistant.core import HomeAssistant
 
 from .device_binding import get_device_info
@@ -26,14 +27,16 @@ class MaintenanceBinarySensorEntityDescription(BinarySensorEntityDescription):
 
 class MaintenanceNeededBinarySensorEntity(BinarySensorEntity):
     def __init__(self, logic: MaintenanceLogic):
-        self._logic = logic
         self.entity_description = MaintenanceBinarySensorEntityDescription(
+            device_class=BinarySensorDeviceClass.PROBLEM,
             key="maintenance_needed",
             has_entity_name=True,
             translation_key="maintenance_needed",
         )
         self._attr_unique_id = f"{logic.source_entity.entity_id}_maintenance_needed"
         self._attr_device_info = get_device_info(logic.source_entity)
+
+        self._logic = logic
 
     @property
     def is_on(self):

@@ -11,7 +11,7 @@ from homeassistant.helpers import selector
 from homeassistant.helpers.typing import ConfigType
 
 from .common import SourceEntity, create_source_entity
-from .const import DOMAIN, CONF_ENTITY_ID, CONF_INTERVAL, SensorType, CONF_COUNT, CONF_SENSOR_TYPE, CONF_NAME
+from .const import DOMAIN, CONF_ENTITY_ID, CONF_INTERVAL, SensorType, CONF_COUNT, CONF_SENSOR_TYPE, CONF_NAME, CONF_ON_STATES
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -32,6 +32,11 @@ SCHEMA_RUNTIME = vol.Schema(
                 mode=selector.NumberSelectorMode.BOX,
             ),
         ),
+        vol.Optional(CONF_ON_STATES): selector.TextSelector(  # TODO: Use state selector
+            selector.TextSelectorConfig(
+                multiple=True,
+            ),
+        ),
     },
 )
 
@@ -43,6 +48,11 @@ SCHEMA_COUNT = vol.Schema(
             selector.NumberSelectorConfig(
                 min=1,
                 mode=selector.NumberSelectorMode.BOX,
+            ),
+        ),
+        vol.Optional(CONF_ON_STATES): selector.TextSelector(
+            selector.TextSelectorConfig(
+                multiple=True,
             ),
         ),
     },
@@ -57,6 +67,11 @@ SCHEMA_FIXED_INTERVAL = vol.Schema(
                 min=1,
                 unit_of_measurement=UnitOfTime.DAYS,
                 mode=selector.NumberSelectorMode.BOX,
+            ),
+        ),
+        vol.Optional(CONF_ON_STATES): selector.TextSelector(
+            selector.TextSelectorConfig(
+                multiple=True,
             ),
         ),
     },
@@ -93,7 +108,7 @@ class ConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
             step_id="runtime",
             data_schema=SCHEMA_RUNTIME,
             errors=errors,
-            last_step=False,
+            last_step=True,
         )
 
     async def async_step_count(
@@ -109,7 +124,7 @@ class ConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
             step_id="count",
             data_schema=SCHEMA_COUNT,
             errors=errors,
-            last_step=False,
+            last_step=True,
         )
 
     async def async_step_fixed_interval(
@@ -125,7 +140,7 @@ class ConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
             step_id="fixed_interval",
             data_schema=SCHEMA_FIXED_INTERVAL,
             errors=errors,
-            last_step=False,
+            last_step=True,
         )
 
     @callback
@@ -150,6 +165,7 @@ class ConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
             CONF_SENSOR_TYPE: selected_sensor_type,
             CONF_ENTITY_ID: source_entity_id,
             CONF_NAME: name,
+            CONF_ON_STATES: user_input.get(CONF_ON_STATES),
         }
 
         # Set unique_id to prevent duplicate entries:

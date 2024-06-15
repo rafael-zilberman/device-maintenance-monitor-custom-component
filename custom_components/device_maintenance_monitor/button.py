@@ -2,7 +2,7 @@ import logging
 from dataclasses import dataclass
 
 from homeassistant.components.button import ButtonEntity, ButtonEntityDescription
-from homeassistant.core import HomeAssistant
+from homeassistant.core import HomeAssistant, callback
 
 from .device_binding import get_device_info
 from .const import DOMAIN
@@ -26,7 +26,6 @@ class MaintenanceButtonEntityDescription(ButtonEntityDescription):
 
 class ResetMaintenanceButtonEntity(ButtonEntity):
     def __init__(self, logic: MaintenanceLogic):
-        self._logic = logic
         self.entity_description = MaintenanceButtonEntityDescription(
             key="reset_maintenance",
             has_entity_name=True,
@@ -35,6 +34,8 @@ class ResetMaintenanceButtonEntity(ButtonEntity):
         self._attr_unique_id = f"{logic.source_entity.entity_id}_reset_maintenance"
         self._attr_device_info = get_device_info(logic.source_entity)
 
-    async def async_press(self):
+        self._logic = logic
+
+    def press(self) -> None:
         # Reset the device maintenance monitor metrics
-        pass
+        self._logic.reset()

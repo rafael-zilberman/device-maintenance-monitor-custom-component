@@ -41,13 +41,15 @@
           "entity_id": "Source entity",
           "name": "Name",
           "unique_id": "Unique id",
-          "interval": "Interval"
+          "interval": "Interval",
+          "on_states": "On states"
         },
         "data_description": {
           "entity_id": "Entity the maintenance monitor is tracking, the maintenance monitor will listen to state changes of this entity to be updated",
           "name": "Leaving blank will take the name from the source entity",
           "unique_id": "Specify a unique_id. This will allow to setup multiple maintenance monitors for the same entity. When not specified it will take the unique_id of the source entity",
-          "interval": "The amount of time the device has been powered on between each maintenance"
+          "interval": "The amount of time the device has been powered on between each maintenance",
+          "on_states": "The states that are considered as on, when the source entity is in one of these states the maintenance monitor will start counting"
         },
         "title": "Create a hourly maintenance monitor"
       },
@@ -56,13 +58,15 @@
           "entity_id": "Source entity",
           "name": "Name",
           "unique_id": "Unique id",
-          "count": "Count"
+          "count": "Count",
+          "on_states": "On states"
         },
         "data_description": {
           "entity_id": "Entity the maintenance monitor is tracking, the maintenance monitor will listen to state changes of this entity to be updated",
           "name": "Leaving blank will take the name from the source entity",
           "unique_id": "Specify a unique_id. This will allow to setup multiple maintenance monitors for the same entity. When not specified it will take the unique_id of the source entity",
-          "count": "The amount of actions on counts between each maintenance"
+          "count": "The amount of actions on counts between each maintenance",
+          "on_states": "The states that are considered as on, when the source entity is in one of these states the maintenance monitor will start counting"
         },
         "title": "Create a power on count maintenance monitor"
       },
@@ -71,13 +75,15 @@
           "entity_id": "Source entity",
           "name": "Name",
           "unique_id": "Unique id",
-          "interval": "Interval"
+          "interval": "Interval",
+          "on_states": "On states"
         },
         "data_description": {
           "entity_id": "Entity the maintenance monitor is tracking, the maintenance monitor will listen to state changes of this entity to be updated",
           "name": "Leaving blank will take the name from the source entity",
           "unique_id": "Specify a unique_id. This will allow to setup multiple maintenance monitors for the same entity. When not specified it will take the unique_id of the source entity",
-          "interval": "The amount of time between each maintenance"
+          "interval": "The amount of time between each maintenance",
+          "on_states": "The states that are considered as on, when the source entity is in one of these states the maintenance monitor will start counting"
         },
         "title": "Create a fixed interval maintenance monitor"
       }

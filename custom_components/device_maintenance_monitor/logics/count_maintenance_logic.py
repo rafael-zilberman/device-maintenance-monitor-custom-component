@@ -1,6 +1,6 @@
 from dataclasses import dataclass
 
-from ..const import SensorType, CONF_COUNT, CONF_ENTITY_ID, CONF_NAME
+from ..const import SensorType, CONF_COUNT, CONF_ENTITY_ID, CONF_NAME, CONF_ON_STATES, DEFAULT_ON_STATES
 from .base_maintenance_logic import MaintenanceData, MaintenanceLogic
 from ..sensors import LastMaintenanceDateSensor
 
@@ -17,10 +17,11 @@ class CountMaintenanceLogic(MaintenanceLogic):
         return CountMaintenanceData(
             entity_id=data.get(CONF_ENTITY_ID),
             name=data.get(CONF_NAME),
+            on_states=data.get(CONF_ON_STATES) or DEFAULT_ON_STATES,
             count=data.get(CONF_COUNT),
         )
 
-    def get_sensors(self):
+    def _get_sensors(self):
         return [
             LastMaintenanceDateSensor(self),
         ]
