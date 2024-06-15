@@ -9,11 +9,11 @@ from .base_maintenance_sensor import MaintenanceSensor
 _LOGGER = logging.getLogger(__name__)
 
 
-class LastMaintenanceDateSensor(MaintenanceSensor[str]):
+class LastMaintenanceDateSensor(MaintenanceSensor):
     key: str = "last_maintenance_date"
 
     @property
-    def device_class(self) -> SensorDeviceClass:
+    def device_class(self) -> Optional[SensorDeviceClass]:
         return SensorDeviceClass.TIMESTAMP
 
     @property

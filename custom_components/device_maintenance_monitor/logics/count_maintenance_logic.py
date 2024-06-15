@@ -2,7 +2,7 @@ from dataclasses import dataclass
 
 from ..const import SensorType, CONF_COUNT, CONF_ENTITY_ID, CONF_NAME, CONF_ON_STATES, DEFAULT_ON_STATES
 from .base_maintenance_logic import MaintenanceData, MaintenanceLogic
-from ..sensors import LastMaintenanceDateSensor
+from ..sensors import LastMaintenanceDateSensor, TurnOnCountSensor
 
 
 @dataclass
@@ -24,7 +24,9 @@ class CountMaintenanceLogic(MaintenanceLogic):
     def _get_sensors(self):
         return [
             LastMaintenanceDateSensor(self),
+            TurnOnCountSensor(self),
         ]
 
+    @property
     def is_maintenance_needed(self) -> bool:
-        return True
+        return self.device_turn_on_count >= self._data.count

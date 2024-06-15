@@ -1,13 +1,18 @@
+import logging
 from dataclasses import dataclass
+from datetime import timedelta
 
 from ..const import SensorType, CONF_INTERVAL, CONF_ENTITY_ID, CONF_NAME, CONF_ON_STATES, DEFAULT_ON_STATES
 from .base_maintenance_logic import MaintenanceData, MaintenanceLogic
-from ..sensors import LastMaintenanceDateSensor, TotalRuntimeDurationSensor
+from ..sensors import LastMaintenanceDateSensor, RuntimeDurationSensor
+from homeassistant.helpers import config_validation as cv
+
+_LOGGER = logging.getLogger(__name__)
 
 
 @dataclass
 class RuntimeMaintenanceData(MaintenanceData):
-    hours_interval: int
+    interval: timedelta
 
 
 class RuntimeMaintenanceLogic(MaintenanceLogic):
@@ -18,14 +23,15 @@ class RuntimeMaintenanceLogic(MaintenanceLogic):
             entity_id=data.get(CONF_ENTITY_ID),
             name=data.get(CONF_NAME),
             on_states=data.get(CONF_ON_STATES) or DEFAULT_ON_STATES,
-            hours_interval=data.get(CONF_INTERVAL),
+            interval=cv.time_period_dict(data.get(CONF_INTERVAL)),
         )
 
     def _get_sensors(self):
         return [
             LastMaintenanceDateSensor(self),
-            TotalRuntimeDurationSensor(self),
+            RuntimeDurationSensor(self),
         ]
 
+    @property
     def is_maintenance_needed(self) -> bool:
-        return True
+        return self.runtime_duration >= self._data.interval

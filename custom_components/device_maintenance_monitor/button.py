@@ -2,7 +2,7 @@ import logging
 from dataclasses import dataclass
 
 from homeassistant.components.button import ButtonEntity, ButtonEntityDescription
-from homeassistant.core import HomeAssistant, callback
+from homeassistant.core import HomeAssistant
 
 from .device_binding import get_device_info
 from .const import DOMAIN

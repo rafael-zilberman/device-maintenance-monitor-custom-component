@@ -5,13 +5,13 @@ from typing import Any
 import voluptuous as vol
 from homeassistant import config_entries
 from homeassistant.config_entries import FlowResult, OptionsFlow, ConfigEntry
-from homeassistant.const import UnitOfTime
 from homeassistant.core import callback
 from homeassistant.helpers import selector
 from homeassistant.helpers.typing import ConfigType
 
 from .common import SourceEntity, create_source_entity
-from .const import DOMAIN, CONF_ENTITY_ID, CONF_INTERVAL, SensorType, CONF_COUNT, CONF_SENSOR_TYPE, CONF_NAME, CONF_ON_STATES
+from .const import DOMAIN, CONF_ENTITY_ID, CONF_INTERVAL, SensorType, CONF_COUNT, CONF_SENSOR_TYPE, CONF_NAME, \
+    CONF_ON_STATES
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -25,13 +25,7 @@ SCHEMA_RUNTIME = vol.Schema(
     {
         vol.Required(CONF_ENTITY_ID): selector.EntitySelector(),
         vol.Optional(CONF_NAME): selector.TextSelector(),
-        vol.Required(CONF_INTERVAL): selector.NumberSelector(
-            selector.NumberSelectorConfig(
-                min=1,
-                unit_of_measurement=UnitOfTime.HOURS,
-                mode=selector.NumberSelectorMode.BOX,
-            ),
-        ),
+        vol.Required(CONF_INTERVAL): selector.DurationSelector(),
         vol.Optional(CONF_ON_STATES): selector.TextSelector(  # TODO: Use state selector
             selector.TextSelectorConfig(
                 multiple=True,
@@ -62,11 +56,9 @@ SCHEMA_FIXED_INTERVAL = vol.Schema(
     {
         vol.Required(CONF_ENTITY_ID): selector.EntitySelector(),
         vol.Optional(CONF_NAME): selector.TextSelector(),
-        vol.Required(CONF_INTERVAL): selector.NumberSelector(
-            selector.NumberSelectorConfig(
-                min=1,
-                unit_of_measurement=UnitOfTime.DAYS,
-                mode=selector.NumberSelectorMode.BOX,
+        vol.Required(CONF_INTERVAL): selector.DurationSelector(
+            selector.DurationSelectorConfig(
+                enable_day=True,
             ),
         ),
         vol.Optional(CONF_ON_STATES): selector.TextSelector(
@@ -161,12 +153,12 @@ class ConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
         )
         name = user_input.get(CONF_NAME, f"{source_entity.name} Maintenance Monitor")
 
-        sensor_config: ConfigType = {
+        entry_config: ConfigType = copy.copy(user_input)
+        entry_config.update({
             CONF_SENSOR_TYPE: selected_sensor_type,
             CONF_ENTITY_ID: source_entity_id,
             CONF_NAME: name,
-            CONF_ON_STATES: user_input.get(CONF_ON_STATES),
-        }
+        })
 
         # Set unique_id to prevent duplicate entries:
         source_unique_id = (
@@ -175,7 +167,8 @@ class ConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
         await self.async_set_unique_id(f"maintenance_monitor_{source_unique_id}")
         self._abort_if_unique_id_configured()
 
-        return self.async_create_entry(title=str(name), data=sensor_config)
+        _LOGGER.info(f"Config entry for sensor type {selected_sensor_type}: {entry_config}")
+        return self.async_create_entry(title=str(name), data=entry_config)
 
 
 class OptionsFlowHandler(OptionsFlow):

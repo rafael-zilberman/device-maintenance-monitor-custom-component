@@ -28,7 +28,6 @@ class MaintenanceBinarySensorEntityDescription(BinarySensorEntityDescription):
 class MaintenanceNeededBinarySensorEntity(BinarySensorEntity):
     def __init__(self, logic: MaintenanceLogic):
         self.entity_description = MaintenanceBinarySensorEntityDescription(
-            device_class=BinarySensorDeviceClass.PROBLEM,
             key="maintenance_needed",
             has_entity_name=True,
             translation_key="maintenance_needed",
@@ -40,4 +39,5 @@ class MaintenanceNeededBinarySensorEntity(BinarySensorEntity):
 
     @property
     def is_on(self):
+        _LOGGER.info(f"Checking if maintenance is needed for {self._logic.source_entity.entity_id}")
         return self._logic.is_maintenance_needed

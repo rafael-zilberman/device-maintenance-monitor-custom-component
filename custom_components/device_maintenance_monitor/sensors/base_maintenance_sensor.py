@@ -2,15 +2,12 @@ from abc import ABC, abstractmethod
 from typing import Optional, Generic, TypeVar
 
 from homeassistant.components.sensor import SensorDeviceClass
-from homeassistant.core import HomeAssistant
 
 from ..common import SourceEntity
 from ..logics.base_maintenance_logic import MaintenanceLogic
 
-TState = TypeVar('TState')
 
-
-class MaintenanceSensor(ABC, Generic[TState]):
+class MaintenanceSensor(ABC):
     key: str
 
     def __init__(self, logic: MaintenanceLogic):
@@ -25,10 +22,6 @@ class MaintenanceSensor(ABC, Generic[TState]):
         return self._logic
 
     @property
-    def hass(self) -> HomeAssistant:
-        return self.logic.hass
-
-    @property
     def source_entity(self) -> SourceEntity:
         return self.logic.source_entity
 
@@ -41,9 +34,9 @@ class MaintenanceSensor(ABC, Generic[TState]):
         return None
 
     @property
-    def state(self) -> Optional[TState]:
+    def state(self) -> Optional[str]:
         return None
 
     @abstractmethod
-    def restore_state(self, state: TState):
+    def restore_state(self, state: str):
         raise NotImplementedError()

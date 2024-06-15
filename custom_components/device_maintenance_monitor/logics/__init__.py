@@ -38,4 +38,8 @@ async def get_maintenance_logic(hass: HomeAssistant, config_entry: ConfigEntry) 
         source_entity_id,
         hass,
     )
-    return sensor_logic(hass, config_entry, source_entity)
+    config_data = dict(config_entry.data)
+    return sensor_logic(
+        config_data=config_data,
+        source_entity=source_entity
+    )
