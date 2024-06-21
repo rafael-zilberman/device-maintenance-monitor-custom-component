@@ -49,7 +49,8 @@ class CountMaintenanceLogic(MaintenanceLogic):
         if self._last_maintenance_date is None:
             return None
         # TODO: move to consts
-        days_since_last_maintenance = (datetime.now() - self._last_maintenance_date).total_seconds() / 86400
+        now = datetime.now()
+        days_since_last_maintenance = (now - self._last_maintenance_date).total_seconds() / 86400
         if days_since_last_maintenance == 0:
             return None
         average_turn_on_per_day = self._device_turn_on_count / days_since_last_maintenance
@@ -57,4 +58,4 @@ class CountMaintenanceLogic(MaintenanceLogic):
             return None
         turn_on_left_until_maintenance = self._data.count - self._device_turn_on_count
         days_left_until_maintenance = turn_on_left_until_maintenance / average_turn_on_per_day
-        return datetime.now() + timedelta(days=days_left_until_maintenance)
+        return now + timedelta(days=days_left_until_maintenance)

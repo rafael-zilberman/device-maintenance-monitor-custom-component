@@ -117,3 +117,6 @@ class MaintenanceLogic(ABC, Generic[TData]):
     @property
     def predicted_maintenance_date(self) -> Optional[datetime]:
         return None
+
+    def update(self):
+        pass

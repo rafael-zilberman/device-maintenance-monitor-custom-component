@@ -45,8 +45,9 @@ class RuntimeMaintenanceLogic(MaintenanceLogic):
         self._last_device_on_time = datetime.now()
 
     def _handle_turn_off(self):
-        if self._last_device_on_time:
-            self._runtime_duration += (datetime.now() - self._last_device_on_time)
+        if self._last_device_on_time is None:
+            return
+        self._runtime_duration += (datetime.now() - self._last_device_on_time)
         self._last_device_on_time = None
 
     @property
@@ -55,7 +56,7 @@ class RuntimeMaintenanceLogic(MaintenanceLogic):
 
     def _get_state(self) -> Dict[str, str]:
         return {
-            "runtime_duration": str(int(self._runtime_duration.total_seconds())),
+            "runtime_duration": str(int(round(self._runtime_duration.total_seconds()))),
         }
 
     def _restore_state(self, state: Dict[str, str]):
@@ -72,7 +73,8 @@ class RuntimeMaintenanceLogic(MaintenanceLogic):
         if self._last_maintenance_date is None:
             return None
 
-        days_since_last_maintenance = (datetime.now() - self._last_maintenance_date).total_seconds() / 86400
+        now = datetime.now()
+        days_since_last_maintenance = (now - self._last_maintenance_date).total_seconds() / 86400
         if days_since_last_maintenance == 0:
             return None
         average_runtime_per_day = self._runtime_duration / days_since_last_maintenance
@@ -80,4 +82,11 @@ class RuntimeMaintenanceLogic(MaintenanceLogic):
             return None
         runtime_left_until_maintenance = self._data.interval - self._runtime_duration
         days_left_until_maintenance = runtime_left_until_maintenance / average_runtime_per_day
-        return datetime.now() + timedelta(days=days_left_until_maintenance)
+        return now + timedelta(days=days_left_until_maintenance)
+
+    def update(self):
+        if self._last_device_on_time is None:
+            return
+        now = datetime.now()
+        self._runtime_duration += (now - self._last_device_on_time)
+        self._last_device_on_time = now

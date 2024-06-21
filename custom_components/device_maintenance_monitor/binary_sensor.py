@@ -103,6 +103,7 @@ class MaintenanceNeededBinarySensorEntity(BinarySensorEntity, RestoreEntity):
             @callback
             def async_update(__: datetime | None = None) -> None:
                 """Update the entity."""
+                self._logic.update()
                 self.async_schedule_update_ha_state(True)
 
             self.async_on_remove(

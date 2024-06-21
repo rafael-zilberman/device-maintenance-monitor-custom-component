@@ -1,6 +1,6 @@
 import copy
 import logging
-from typing import Any
+from typing import Any, Dict
 
 import voluptuous as vol
 from homeassistant import config_entries
@@ -22,49 +22,38 @@ SENSOR_TYPE_MENU = {
     SensorType.FIXED_INTERVAL: "Fixed Interval",
 }
 
-SETUP_SCHEMA = vol.Schema(
-    {
-        vol.Required(CONF_ENTITY_ID): selector.EntitySelector(),
-        vol.Optional(CONF_NAME): selector.TextSelector(),
-    },
-)
+SETUP_SCHEMA = {
+    vol.Required(CONF_ENTITY_ID): selector.EntitySelector(),
+    vol.Optional(CONF_NAME): selector.TextSelector(),
+}
 
-CONFIG_SCHEMA = vol.Schema(
-    {
-        vol.Optional(CONF_NAME): selector.TextSelector(),
-    },
-)
+CONFIG_SCHEMA = {
+    vol.Optional(CONF_NAME): selector.TextSelector(),
+}
 
+SCHEMA_RUNTIME = {
+    vol.Required(CONF_INTERVAL): selector.DurationSelector(),
+}
 
-SCHEMA_RUNTIME = vol.Schema(
-    {
-        vol.Required(CONF_INTERVAL): selector.DurationSelector(),
-    },
-)
-
-SCHEMA_COUNT = vol.Schema(
-    {
-        vol.Required(CONF_COUNT): selector.NumberSelector(
-            selector.NumberSelectorConfig(
-                min=1,
-                mode=selector.NumberSelectorMode.BOX,
-            ),
+SCHEMA_COUNT = {
+    vol.Required(CONF_COUNT): selector.NumberSelector(
+        selector.NumberSelectorConfig(
+            min=1,
+            mode=selector.NumberSelectorMode.BOX,
         ),
-    },
-)
+    ),
+}
 
-SCHEMA_FIXED_INTERVAL = vol.Schema(
-    {
-        vol.Required(CONF_INTERVAL): selector.DurationSelector(
-            selector.DurationSelectorConfig(
-                enable_day=True,
-            ),
+SCHEMA_FIXED_INTERVAL = {
+    vol.Required(CONF_INTERVAL): selector.DurationSelector(
+        selector.DurationSelectorConfig(
+            enable_day=True,
         ),
-    },
-)
+    ),
+}
 
 
-def _get_schema_by_sensor_type(sensor_type: SensorType) -> vol.Schema:
+def _get_schema_by_sensor_type(sensor_type: SensorType) -> Dict:
     if sensor_type == SensorType.RUNTIME:
         return SCHEMA_RUNTIME
     elif sensor_type == SensorType.COUNT:
@@ -73,6 +62,7 @@ def _get_schema_by_sensor_type(sensor_type: SensorType) -> vol.Schema:
         return SCHEMA_FIXED_INTERVAL
     else:
         raise NotImplementedError(f"Sensor type {sensor_type} is not implemented")
+
 
 class ConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
     VERSION = 1
@@ -140,7 +130,8 @@ class ConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
         )
 
     def _build_setup_schema(self, sensor_type: SensorType):
-        return SETUP_SCHEMA.extend(_get_schema_by_sensor_type(sensor_type))
+        schema = vol.Schema(SETUP_SCHEMA)
+        return schema.extend(_get_schema_by_sensor_type(sensor_type))
 
     @callback
     async def create_config_entry(
@@ -250,7 +241,8 @@ class OptionsFlowHandler(OptionsFlow):
 
     def _build_options_schema(self) -> vol.Schema:
         """Build the options schema. depending on the selected sensor type."""
-        data_schema: vol.Schema = _get_schema_by_sensor_type(self.sensor_type)
+        schema = vol.Schema(CONFIG_SCHEMA)
+        data_schema = schema.extend(_get_schema_by_sensor_type(self.sensor_type))
 
         # Get the states of the source entity
         options = ["on", "off"]
