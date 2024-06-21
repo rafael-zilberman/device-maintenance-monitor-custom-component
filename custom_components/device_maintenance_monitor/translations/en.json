@@ -5,17 +5,6 @@
         "name": "Maintenance needed"
       }
     },
-    "sensor": {
-      "last_maintenance_date": {
-        "name": "Last maintenance date"
-      },
-      "runtime_duration": {
-        "name": "Runtime duration"
-      },
-      "turn_on_count": {
-        "name": "Turn on count"
-      }
-    },
     "button": {
       "reset_maintenance": {
         "name": "Reset"

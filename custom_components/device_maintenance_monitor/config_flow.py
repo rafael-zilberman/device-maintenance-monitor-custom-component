@@ -144,7 +144,7 @@ class ConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
         _LOGGER.info(f"Creating config entry for sensor type {selected_sensor_type}: {user_input}")
 
         source_entity_id = user_input.get(CONF_ENTITY_ID)
-        if not source_entity_id:
+        if source_entity_id is None:
             return self.async_abort(reason="no_source_entity")
 
         source_entity = await create_source_entity(

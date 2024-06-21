@@ -1,7 +1,7 @@
 from abc import ABC, abstractmethod
 from dataclasses import dataclass
 from datetime import datetime, timedelta
-from typing import Generic, TypeVar, List, Optional, Dict
+from typing import Generic, TypeVar, List, Optional, Dict, final
 
 from ..common import SourceEntity
 from ..const import SensorType
@@ -11,7 +11,7 @@ from ..const import SensorType
 class MaintenanceData:
     entity_id: str
     name: str
-    on_states: Optional[List[str]]
+    on_states: List[str]
 
 
 TData = TypeVar('TData', bound=MaintenanceData)
@@ -26,80 +26,94 @@ class MaintenanceLogic(ABC, Generic[TData]):
     def __init__(self, *, config_data: Dict, source_entity: SourceEntity):
         self._data = self._get_logic_data(config_data)
         self._source_entity = source_entity
-        self._sensors = []
 
         self._last_maintenance_date = datetime.now()
-        self._last_device_on_time = None
-        self._runtime_duration = timedelta(seconds=0)
-        self._device_turn_on_count = 0
+        self._setup()
+
+    def _setup(self):
+        pass
 
     @abstractmethod
     def _get_logic_data(self, data: dict) -> TData:
-        raise NotImplementedError()
-
-    @abstractmethod
-    def _get_sensors(self) -> List["MaintenanceSensor"]:
-        raise NotImplementedError()
-
-    @property
-    def is_maintenance_needed(self) -> bool:
         raise NotImplementedError()
 
     @property
     def source_entity(self) -> SourceEntity:
         return self._source_entity
 
-    @property
-    def sensors(self) -> List["MaintenanceSensor"]:
-        if not self._sensors:
-            self._sensors = self._get_sensors()
-        return self._sensors
-
-    @property
-    def last_maintenance_date(self) -> datetime:
-        return self._last_maintenance_date
-
-    def set_last_maintenance_date(self, date: datetime):
-        self._last_maintenance_date = date
-
-    @property
-    def runtime_duration(self) -> timedelta:
-        return self._runtime_duration
-
-    def set_runtime_duration(self, duration: timedelta):
-        self._runtime_duration = duration
-
-    @property
-    def device_turn_on_count(self) -> int:
-        return self._device_turn_on_count
-
-    def set_device_turn_on_count(self, count: int):
-        self._device_turn_on_count = count
-
+    @final
     def reset(self):
         # Reset the last maintenance date to the current date
         self._last_maintenance_date = datetime.now()  # TODO: move defaults to consts
 
-        # Reset the total runtime duration to 0
-        self._runtime_duration = timedelta(seconds=0)
+        self._reset()
 
-        # Reset the device turn on count to 0
-        self._device_turn_on_count = 0
+    def _reset(self):
+        pass
 
-    def handle_source_entity_state_change(self, old_state: Optional, new_state: Optional):
-        is_old_state_on = old_state and old_state in self._data.on_states
-        is_new_state_on = new_state and new_state in self._data.on_states
+    @final
+    def handle_source_entity_state_change(self, old_state: str, new_state: str):
+        is_old_state_on = old_state in self._data.on_states
+        is_new_state_on = new_state in self._data.on_states
         if is_old_state_on == is_new_state_on:
             # The state hasn't changed
             return
 
         if is_new_state_on:
             # The device has turned on.
-            # Store the current time as the last device on time
-            self._last_device_on_time = datetime.now()
-            # Increment the device turn on count
-            self._device_turn_on_count += 1
-        elif self._last_device_on_time is not None:
-            # The device has turned off, calculate the duration the device was on
-            self._runtime_duration += (datetime.now() - self._last_device_on_time)
-            self._last_device_on_time = None
+            self._handle_turn_on()
+        else:
+            # The device has turned off.
+            self._handle_turn_off()
+
+    @final
+    def handle_startup(self, current_state: str):
+        is_current_state_on = current_state in self._data.on_states
+        if is_current_state_on:
+            # The device is on.
+            self._handle_turn_on()
+        else:
+            # The device is off.
+            self._handle_turn_off()
+
+    def _handle_turn_on(self):
+        pass
+
+    def _handle_turn_off(self):
+        pass
+
+    @property
+    def is_maintenance_needed(self) -> bool:
+        raise NotImplementedError()
+
+    @final
+    def get_state(self) -> Dict[str, str]:
+        state = self._get_state()
+        state["last_maintenance_date"] = self._last_maintenance_date.strftime(
+            '%Y-%m-%d %H:%M:%S')  # TODO: Move to consts
+        if self.predicted_maintenance_date:
+            state["predicted_maintenance_date"] = self.predicted_maintenance_date.strftime(
+                '%Y-%m-%d %H:%M:%S')
+        return state
+
+    def _get_state(self) -> Dict[str, str]:
+        return {}
+
+    @final
+    def restore_state(self, state: Dict[str, str]):
+        last_maintenance_date = state.get("last_maintenance_date")  # TODO: Move to consts
+        if last_maintenance_date:
+            self._last_maintenance_date = datetime.strptime(last_maintenance_date,
+                                                            '%Y-%m-%d %H:%M:%S')  # TODO: Move format to consts
+        self._restore_state(state)
+
+    def _restore_state(self, state: Dict[str, str]):
+        pass
+
+    @property
+    def update_frequency(self) -> Optional[timedelta]:
+        return
+
+    @property
+    def predicted_maintenance_date(self) -> Optional[datetime]:
+        return None

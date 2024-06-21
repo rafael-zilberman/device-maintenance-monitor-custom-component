@@ -3,9 +3,10 @@ from dataclasses import dataclass
 
 from homeassistant.components.button import ButtonEntity, ButtonEntityDescription
 from homeassistant.core import HomeAssistant
+from homeassistant.helpers.dispatcher import async_dispatcher_send
 
 from .device_binding import get_device_info
-from .const import DOMAIN
+from .const import DOMAIN, SIGNAL_SENSOR_STATE_CHANGE
 from .logics import MaintenanceLogic
 
 _LOGGER = logging.getLogger(__name__)
@@ -36,6 +37,8 @@ class ResetMaintenanceButtonEntity(ButtonEntity):
 
         self._logic = logic
 
-    def press(self) -> None:
+    async def async_press(self) -> None:
         # Reset the device maintenance monitor metrics
         self._logic.reset()
+        self.async_write_ha_state()
+        async_dispatcher_send(self.hass, SIGNAL_SENSOR_STATE_CHANGE)

@@ -1,9 +1,9 @@
 from dataclasses import dataclass
 from datetime import timedelta, datetime
+from typing import Optional
 
 from ..const import SensorType, CONF_INTERVAL, CONF_ENTITY_ID, CONF_NAME, CONF_ON_STATES, DEFAULT_ON_STATES
 from .base_maintenance_logic import MaintenanceData, MaintenanceLogic
-from ..sensors import LastMaintenanceDateSensor, RuntimeDurationSensor
 from homeassistant.helpers import config_validation as cv
 
 
@@ -23,12 +23,18 @@ class FixedIntervalMaintenanceLogic(MaintenanceLogic):
             interval=cv.time_period_dict(data.get(CONF_INTERVAL)),
         )
 
-    def _get_sensors(self):
-        return [
-            LastMaintenanceDateSensor(self),
-            RuntimeDurationSensor(self),
-        ]
-
     @property
     def is_maintenance_needed(self) -> bool:
-        return datetime.now() - self.last_maintenance_date >= self._data.interval
+        if self._last_maintenance_date is None:
+            return True
+        return datetime.now() - self._last_maintenance_date >= self._data.interval
+
+    @property
+    def update_frequency(self) -> Optional[timedelta]:
+        return timedelta(minutes=10)
+
+    @property
+    def predicted_maintenance_date(self) -> Optional[datetime]:
+        if self._last_maintenance_date is None:
+            return None
+        return self._last_maintenance_date + self._data.interval

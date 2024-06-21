@@ -19,11 +19,11 @@ IMPLEMENTED_LOGICS: List[Type[MaintenanceLogic]] = [
 
 async def get_maintenance_logic(hass: HomeAssistant, config_entry: ConfigEntry) -> MaintenanceLogic:
     sensor_type = config_entry.data.get(CONF_SENSOR_TYPE)
-    if not sensor_type:
+    if sensor_type is None:
         raise ValueError(f"{CONF_SENSOR_TYPE} is required in {config_entry.data}")
 
     source_entity_id = config_entry.data.get(CONF_ENTITY_ID)
-    if not source_entity_id:
+    if source_entity_id is None:
         raise ValueError(f"{CONF_ENTITY_ID} is required in {config_entry.data}")
 
     logic_type_by_sensor_type = {
@@ -31,7 +31,7 @@ async def get_maintenance_logic(hass: HomeAssistant, config_entry: ConfigEntry) 
     }
 
     sensor_logic = logic_type_by_sensor_type.get(sensor_type)
-    if not sensor_logic:
+    if sensor_logic is None:
         raise NotImplementedError(f"sensor_type {sensor_type} is not implemented")
 
     source_entity = await create_source_entity(
@@ -41,5 +41,5 @@ async def get_maintenance_logic(hass: HomeAssistant, config_entry: ConfigEntry) 
     config_data = dict(config_entry.data)
     return sensor_logic(
         config_data=config_data,
-        source_entity=source_entity
+        source_entity=source_entity,
     )
