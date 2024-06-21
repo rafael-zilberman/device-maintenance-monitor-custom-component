@@ -7,6 +7,7 @@ from homeassistant import config_entries
 from homeassistant.config_entries import FlowResult, OptionsFlow, ConfigEntry
 from homeassistant.core import callback
 from homeassistant.helpers import selector
+from homeassistant.helpers.entity import get_capability
 from homeassistant.helpers.typing import ConfigType
 
 from .common import SourceEntity, create_source_entity
@@ -21,32 +22,32 @@ SENSOR_TYPE_MENU = {
     SensorType.FIXED_INTERVAL: "Fixed Interval",
 }
 
-SCHEMA_RUNTIME = vol.Schema(
+SETUP_SCHEMA = vol.Schema(
     {
         vol.Required(CONF_ENTITY_ID): selector.EntitySelector(),
         vol.Optional(CONF_NAME): selector.TextSelector(),
+    },
+)
+
+CONFIG_SCHEMA = vol.Schema(
+    {
+        vol.Optional(CONF_NAME): selector.TextSelector(),
+    },
+)
+
+
+SCHEMA_RUNTIME = vol.Schema(
+    {
         vol.Required(CONF_INTERVAL): selector.DurationSelector(),
-        vol.Optional(CONF_ON_STATES): selector.TextSelector(  # TODO: Use state selector
-            selector.TextSelectorConfig(
-                multiple=True,
-            ),
-        ),
     },
 )
 
 SCHEMA_COUNT = vol.Schema(
     {
-        vol.Required(CONF_ENTITY_ID): selector.EntitySelector(),
-        vol.Optional(CONF_NAME): selector.TextSelector(),
         vol.Required(CONF_COUNT): selector.NumberSelector(
             selector.NumberSelectorConfig(
                 min=1,
                 mode=selector.NumberSelectorMode.BOX,
-            ),
-        ),
-        vol.Optional(CONF_ON_STATES): selector.TextSelector(
-            selector.TextSelectorConfig(
-                multiple=True,
             ),
         ),
     },
@@ -54,21 +55,24 @@ SCHEMA_COUNT = vol.Schema(
 
 SCHEMA_FIXED_INTERVAL = vol.Schema(
     {
-        vol.Required(CONF_ENTITY_ID): selector.EntitySelector(),
-        vol.Optional(CONF_NAME): selector.TextSelector(),
         vol.Required(CONF_INTERVAL): selector.DurationSelector(
             selector.DurationSelectorConfig(
                 enable_day=True,
             ),
         ),
-        vol.Optional(CONF_ON_STATES): selector.TextSelector(
-            selector.TextSelectorConfig(
-                multiple=True,
-            ),
-        ),
     },
 )
 
+
+def _get_schema_by_sensor_type(sensor_type: SensorType) -> vol.Schema:
+    if sensor_type == SensorType.RUNTIME:
+        return SCHEMA_RUNTIME
+    elif sensor_type == SensorType.COUNT:
+        return SCHEMA_COUNT
+    elif sensor_type == SensorType.FIXED_INTERVAL:
+        return SCHEMA_FIXED_INTERVAL
+    else:
+        raise NotImplementedError(f"Sensor type {sensor_type} is not implemented")
 
 class ConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
     VERSION = 1
@@ -98,7 +102,7 @@ class ConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
 
         return self.async_show_form(
             step_id="runtime",
-            data_schema=SCHEMA_RUNTIME,
+            data_schema=self._build_setup_schema(SensorType.RUNTIME),
             errors=errors,
             last_step=True,
         )
@@ -114,7 +118,7 @@ class ConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
 
         return self.async_show_form(
             step_id="count",
-            data_schema=SCHEMA_COUNT,
+            data_schema=self._build_setup_schema(SensorType.COUNT),
             errors=errors,
             last_step=True,
         )
@@ -130,10 +134,13 @@ class ConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
 
         return self.async_show_form(
             step_id="fixed_interval",
-            data_schema=SCHEMA_FIXED_INTERVAL,
+            data_schema=self._build_setup_schema(SensorType.FIXED_INTERVAL),
             errors=errors,
             last_step=True,
         )
+
+    def _build_setup_schema(self, sensor_type: SensorType):
+        return SETUP_SCHEMA.extend(_get_schema_by_sensor_type(sensor_type))
 
     @callback
     async def create_config_entry(
@@ -195,7 +202,7 @@ class OptionsFlowHandler(OptionsFlow):
                 self.hass,
             )
 
-        schema = self.build_options_schema()
+        schema = self._build_options_schema()
         if user_input is not None:
             errors = await self.save_options(user_input, schema)
             if not errors:
@@ -241,17 +248,26 @@ class OptionsFlowHandler(OptionsFlow):
             elif key in self.current_config:
                 self.current_config.pop(key)
 
-    def build_options_schema(self) -> vol.Schema:
+    def _build_options_schema(self) -> vol.Schema:
         """Build the options schema. depending on the selected sensor type."""
-        data_schema: vol.Schema = vol.Schema({})
-        if self.sensor_type == SensorType.RUNTIME:
-            data_schema = SCHEMA_RUNTIME
-        elif self.sensor_type == SensorType.COUNT:
-            data_schema = SCHEMA_COUNT
-        elif self.sensor_type == SensorType.FIXED_INTERVAL:
-            data_schema = SCHEMA_FIXED_INTERVAL
-        else:
-            raise NotImplementedError(f"Sensor type {self.sensor_type} is not implemented")
+        data_schema: vol.Schema = _get_schema_by_sensor_type(self.sensor_type)
+
+        # Get the states of the source entity
+        options = ["on", "off"]
+        for capability in ["hvac_modes", "options"]:
+            capabilities = get_capability(self.hass, self.source_entity_id, capability)
+            if capabilities:
+                options = capabilities
+                break
+        _LOGGER.info(f"States: {options}")
+        # Add on_states to the schema
+        data_schema = data_schema.extend({
+            vol.Optional(CONF_ON_STATES): selector.SelectSelector(
+                selector.SelectSelectorConfig(
+                    options=options,
+                ),
+            ),
+        })
 
         return _fill_schema_defaults(
             data_schema,
@@ -261,21 +277,21 @@ class OptionsFlowHandler(OptionsFlow):
 
 def _fill_schema_defaults(
         data_schema: vol.Schema,
-        options: dict[str, str],
+        current_config: dict[str, str],
 ) -> vol.Schema:
     """Make a copy of the schema with suggested values set to saved options."""
     schema = {}
     for key, val in data_schema.schema.items():
         new_key = key
-        if key in options and isinstance(key, vol.Marker):
+        if key in current_config and isinstance(key, vol.Marker):
             if (
                     isinstance(key, vol.Optional)
                     and callable(key.default)
                     and key.default()
             ):
-                new_key = vol.Optional(key.schema, default=options.get(key))  # type: ignore
+                new_key = vol.Optional(key.schema, default=current_config.get(key))  # type: ignore
             else:
                 new_key = copy.copy(key)
-                new_key.description = {"suggested_value": options.get(key)}  # type: ignore
+                new_key.description = {"suggested_value": current_config.get(key)}  # type: ignore
         schema[new_key] = val
     return vol.Schema(schema)

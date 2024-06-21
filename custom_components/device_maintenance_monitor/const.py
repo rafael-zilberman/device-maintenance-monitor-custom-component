@@ -1,6 +1,8 @@
 from enum import StrEnum
 from typing import Final
 
+from homeassistant.components.climate import HVACMode
+
 DOMAIN: Final = "device_maintenance_monitor"
 CONF_SENSOR_TYPE: Final = "sensor_type"
 CONF_ENTITY_ID: Final = "entity_id"
@@ -8,7 +10,7 @@ CONF_COUNT: Final = "count"
 CONF_INTERVAL: Final = "interval"
 CONF_NAME: Final = "name"
 CONF_ON_STATES: Final = "on_states"
-DEFAULT_ON_STATES: Final = ["on"]  # TODO: Based on the device type
+DEFAULT_ON_STATES: Final = ["on", HVACMode.DRY, HVACMode.COOL, HVACMode.HEAT_COOL, HVACMode.HEAT]  # TODO: Based on the device type
 SIGNAL_SENSOR_STATE_CHANGE: Final = "device_maintenance_monitor_sensor_state_change"
 
 
