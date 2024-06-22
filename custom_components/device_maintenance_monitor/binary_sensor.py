@@ -7,7 +7,8 @@ from homeassistant.components.binary_sensor import (
     BinarySensorEntity,
     BinarySensorEntityDescription,
 )
-from homeassistant.core import Event, HomeAssistant, callback
+from homeassistant.config_entries import ConfigEntry
+from homeassistant.core import Event, HomeAssistant, callback, split_entity_id
 from homeassistant.helpers import start
 from homeassistant.helpers.dispatcher import async_dispatcher_connect
 from homeassistant.helpers.event import (
@@ -29,15 +30,13 @@ _LOGGER = logging.getLogger(__name__)
 
 
 # TODO: Register services
-async def async_setup_entry(hass: HomeAssistant, entry, async_add_entities):
+async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry, async_add_entities):
     """Set up the binary sensor platform."""
 
     logic: MaintenanceLogic = hass.data[DOMAIN][entry.entry_id]
-    async_add_entities(
-        [
-            MaintenanceNeededBinarySensorEntity(logic),
-        ]
-    )
+    async_add_entities([
+        MaintenanceNeededBinarySensorEntity(logic, entry.unique_id),
+    ])
 
 
 @dataclass(frozen=True, kw_only=True)
@@ -48,7 +47,7 @@ class MaintenanceBinarySensorEntityDescription(BinarySensorEntityDescription):
 class MaintenanceNeededBinarySensorEntity(BinarySensorEntity, RestoreEntity):
     """A class that represents a binary sensor entity for indicating whether maintenance is needed."""
 
-    def __init__(self, logic: MaintenanceLogic):
+    def __init__(self, logic: MaintenanceLogic, unique_id: str):
         """Initialize the binary sensor entity.
 
         :param logic: The maintenance logic to be  used.
@@ -58,8 +57,11 @@ class MaintenanceNeededBinarySensorEntity(BinarySensorEntity, RestoreEntity):
             has_entity_name=True,
             translation_key=ENTITY_BINARY_SENSOR_TRANSLATION_KEY,
         )
-        self._attr_unique_id = f"{logic.source_entity.entity_id}_maintenance_needed"
+        self._attr_unique_id = f"{unique_id}_maintenance_needed"
         self._attr_device_info = get_device_info(logic.source_entity)
+
+        object_id = split_entity_id(logic.source_entity.entity_id)[1]
+        self.entity_id = f"binary_sensor.{object_id}_maintenance_needed"
 
         self._logic = logic
 

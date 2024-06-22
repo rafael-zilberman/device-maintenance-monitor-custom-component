@@ -168,6 +168,9 @@ class ConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
             source_entity_id,
             self.hass,
         )
+        if source_entity is None:
+            return self.async_abort(reason="no_source_entity")
+
         name = user_input.get(CONF_NAME, f"{source_entity.name} Maintenance Monitor")
 
         entry_config: ConfigType = copy.copy(user_input)
@@ -180,8 +183,8 @@ class ConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
         )
 
         # Set unique_id to prevent duplicate entries:
-        source_unique_id = source_entity.unique_id or source_entity_id
-        await self.async_set_unique_id(f"maintenance_monitor_{source_unique_id}")
+        source_unique_id = source_entity.unique_id or (source_entity_id.replace(".", "_"))
+        await self.async_set_unique_id(f"mm_{source_unique_id}")
         self._abort_if_unique_id_configured()
 
         return self.async_create_entry(title=str(name), data=entry_config)
