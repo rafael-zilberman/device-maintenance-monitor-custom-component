@@ -4,6 +4,7 @@ import logging
 
 from homeassistant.components.button import ButtonEntity, ButtonEntityDescription
 from homeassistant.config_entries import ConfigEntry
+from homeassistant.const import EntityCategory
 from homeassistant.core import HomeAssistant, split_entity_id
 from homeassistant.helpers.dispatcher import async_dispatcher_send
 
@@ -44,6 +45,7 @@ class ResetMaintenanceButtonEntity(ButtonEntity):
             key=ENTITY_BUTTON_KEY,
             has_entity_name=True,
             translation_key=ENTITY_BUTTON_TRANSLATION_KEY,
+            entity_category=EntityCategory.CONFIG,
         )
         self._attr_unique_id = f"{unique_id}_reset_maintenance"
         self._attr_device_info = get_device_info(logic.source_entity)

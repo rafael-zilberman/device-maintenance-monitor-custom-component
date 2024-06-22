@@ -4,6 +4,7 @@ from datetime import datetime
 import logging
 
 from homeassistant.components.binary_sensor import (
+    BinarySensorDeviceClass,
     BinarySensorEntity,
     BinarySensorEntityDescription,
 )
@@ -56,6 +57,7 @@ class MaintenanceNeededBinarySensorEntity(BinarySensorEntity, RestoreEntity):
             key=ENTITY_BINARY_SENSOR_KEY,
             has_entity_name=True,
             translation_key=ENTITY_BINARY_SENSOR_TRANSLATION_KEY,
+            device_class=BinarySensorDeviceClass.PROBLEM,
         )
         self._attr_unique_id = f"{unique_id}_maintenance_needed"
         self._attr_device_info = get_device_info(logic.source_entity)
@@ -115,7 +117,6 @@ class MaintenanceNeededBinarySensorEntity(BinarySensorEntity, RestoreEntity):
         )
 
         if self._logic.update_frequency:
-
             @callback
             def async_update(__: datetime | None = None) -> None:
                 """Update the entity."""
@@ -127,6 +128,12 @@ class MaintenanceNeededBinarySensorEntity(BinarySensorEntity, RestoreEntity):
                     self.hass, async_update, self._logic.update_frequency
                 )
             )
+
+    @callback
+    def async_will_remove_from_hass(self) -> None:
+        """Handle entity being removed from hass."""
+        self._logic.update()
+        self.async_write_ha_state(True)
 
     @property
     def is_on(self):
