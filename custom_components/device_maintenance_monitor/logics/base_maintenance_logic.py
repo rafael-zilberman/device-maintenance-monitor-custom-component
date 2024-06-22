@@ -1,3 +1,4 @@
+"""Provides the base class for the maintenance logic of a device."""
 from abc import ABC, abstractmethod
 from dataclasses import dataclass
 from datetime import datetime, timedelta
@@ -126,7 +127,9 @@ class MaintenanceLogic(ABC, Generic[TData]):
         state[STATE_LAST_MAINTENANCE_DATE] = self._last_maintenance_date.strftime(
             DATE_FORMAT
         )
-        if self.predicted_maintenance_date:
+        if self.is_maintenance_needed:
+            state[STATE_PREDICTED_MAINTENANCE_DATE] = datetime.now().strftime(DATE_FORMAT)
+        elif self.predicted_maintenance_date:
             state[STATE_PREDICTED_MAINTENANCE_DATE] = (
                 self.predicted_maintenance_date.strftime(DATE_FORMAT)
             )

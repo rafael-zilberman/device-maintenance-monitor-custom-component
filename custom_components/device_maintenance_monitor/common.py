@@ -1,3 +1,4 @@
+"""Common functions for the device maintenance monitor integration."""
 import logging
 from typing import NamedTuple
 

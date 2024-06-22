@@ -1,3 +1,4 @@
+"""A module that defines the logic for maintaining a device based on a fixed interval."""
 from dataclasses import dataclass
 from datetime import datetime, timedelta
 

@@ -1,3 +1,4 @@
+"""The Device Maintenance Monitor integration."""
 from dataclasses import dataclass
 import logging
 

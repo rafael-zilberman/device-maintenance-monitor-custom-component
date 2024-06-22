@@ -1,3 +1,4 @@
+"""The logics module for device maintenance monitor."""
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.core import HomeAssistant
 
@@ -18,6 +19,12 @@ IMPLEMENTED_LOGICS: list[type[MaintenanceLogic]] = [
 async def get_maintenance_logic(
     hass: HomeAssistant, config_entry: ConfigEntry
 ) -> MaintenanceLogic:
+    """Get the maintenance logic for the config entry.
+
+    :param hass: The Home Assistant instance.
+    :param config_entry: The config entry.
+    :return: The maintenance logic.
+    """
     sensor_type = config_entry.data.get(CONF_SENSOR_TYPE)
     if sensor_type is None:
         raise ValueError(f"{CONF_SENSOR_TYPE} is required in {config_entry.data}")

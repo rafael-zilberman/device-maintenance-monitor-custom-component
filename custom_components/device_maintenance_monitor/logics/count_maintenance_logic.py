@@ -1,3 +1,4 @@
+"""A module that defines the logic for maintaining a device based on the turn on count."""
 from dataclasses import dataclass
 from datetime import datetime, timedelta
 

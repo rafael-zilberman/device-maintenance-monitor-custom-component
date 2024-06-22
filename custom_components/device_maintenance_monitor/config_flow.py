@@ -1,3 +1,4 @@
+"""Config flow for Device Maintenance Monitor integration."""
 import copy
 import logging
 from typing import Any

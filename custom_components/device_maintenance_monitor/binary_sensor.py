@@ -1,3 +1,4 @@
+"""The binary sensor for the Device Maintenance Monitor integration."""
 from dataclasses import dataclass
 from datetime import datetime
 import logging

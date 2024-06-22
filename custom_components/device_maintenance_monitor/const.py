@@ -1,3 +1,4 @@
+"""Constants for the Device Maintenance Monitor integration."""
 from datetime import timedelta
 from enum import StrEnum
 from typing import Final

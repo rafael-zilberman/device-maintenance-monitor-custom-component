@@ -1,3 +1,4 @@
+"""Helper functions for binding devices to config entries."""
 import logging
 
 from homeassistant.config_entries import ConfigEntry
