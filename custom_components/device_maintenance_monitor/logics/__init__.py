@@ -1,23 +1,23 @@
-from typing import List, Type
-
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.core import HomeAssistant
 
 from ..common import create_source_entity
-from ..const import CONF_SENSOR_TYPE, CONF_ENTITY_ID
-from .base_maintenance_logic import MaintenanceData, MaintenanceLogic
-from .fixed_interval_maintenance_logic import FixedIntervalMaintenanceLogic
+from ..const import CONF_ENTITY_ID, CONF_SENSOR_TYPE
+from .base_maintenance_logic import MaintenanceLogic
 from .count_maintenance_logic import CountMaintenanceLogic
+from .fixed_interval_maintenance_logic import FixedIntervalMaintenanceLogic
 from .runtime_maintenance_logic import RuntimeMaintenanceLogic
 
-IMPLEMENTED_LOGICS: List[Type[MaintenanceLogic]] = [
+IMPLEMENTED_LOGICS: list[type[MaintenanceLogic]] = [
     RuntimeMaintenanceLogic,
     CountMaintenanceLogic,
     FixedIntervalMaintenanceLogic,
 ]
 
 
-async def get_maintenance_logic(hass: HomeAssistant, config_entry: ConfigEntry) -> MaintenanceLogic:
+async def get_maintenance_logic(
+    hass: HomeAssistant, config_entry: ConfigEntry
+) -> MaintenanceLogic:
     sensor_type = config_entry.data.get(CONF_SENSOR_TYPE)
     if sensor_type is None:
         raise ValueError(f"{CONF_SENSOR_TYPE} is required in {config_entry.data}")

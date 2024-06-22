@@ -2,7 +2,7 @@ import logging
 
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.core import HomeAssistant
-from homeassistant.helpers import device_registry
+from homeassistant.helpers import device_registry as dr
 from homeassistant.helpers.device_registry import DeviceInfo
 
 from .common import SourceEntity
@@ -11,16 +11,13 @@ _LOGGER = logging.getLogger(__name__)
 
 
 def bind_config_entry_to_device(
-        hass: HomeAssistant,
-        config_entry: ConfigEntry,
-        source_entity: SourceEntity,
+    hass: HomeAssistant,
+    config_entry: ConfigEntry,
+    source_entity: SourceEntity,
 ) -> None:
-    """
-    Bind the config entry to the device from the source entity if it is not already bound
-    """
+    """Bind the config entry to the device from the source entity if it is not already bound."""
     device_entry = source_entity.device_entry
-    _LOGGER.info(f"Binding config entry {config_entry} to device {device_entry}")
-    device_reg = device_registry.async_get(hass)
+    device_reg = dr.async_get(hass)
     if device_entry and config_entry.entry_id not in device_entry.config_entries:
         device_reg.async_update_device(
             device_entry.id,
@@ -28,12 +25,8 @@ def bind_config_entry_to_device(
         )
 
 
-def get_device_info(
-        source_entity: SourceEntity
-) -> DeviceInfo | None:
-    """
-    Get the device info for the source entity
-    """
+def get_device_info(source_entity: SourceEntity) -> DeviceInfo | None:
+    """Get the device info for the source entity."""
     device = source_entity.device_entry
 
     if device is None:
@@ -42,7 +35,6 @@ def get_device_info(
     if not device.identifiers and not device.connections:
         return None
 
-    _LOGGER.info(f"Getting device info for {device}: {device.identifiers}, {device.connections}")
     return DeviceInfo(
         identifiers=device.identifiers,
         connections=device.connections,
