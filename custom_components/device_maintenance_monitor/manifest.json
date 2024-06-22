@@ -1,13 +1,17 @@
 {
   "domain": "device_maintenance_monitor",
   "name": "Device Maintenance Monitor",
-  "version": "0.0.1",
-  "requirements": [],
-  "dependencies": [],
-  "codeowners": ["@rafael-zilberman"],
-  "iot_class": "local_polling",
-  "documentation": "https://github.com/rafael-zilberman/device-maintenance-monitor-custom-component",
-  "issue_tracker": "https://github.com/rafael-zilberman/device-maintenance-monitor-custom-component/issues",
+  "codeowners": [
+    "@rafael-zilberman"
+  ],
   "config_flow": true,
-  "loggers": ["device_maintenance_monitor"]
+  "dependencies": [],
+  "documentation": "https://github.com/rafael-zilberman/device-maintenance-monitor-custom-component",
+  "iot_class": "local_polling",
+  "issue_tracker": "https://github.com/rafael-zilberman/device-maintenance-monitor-custom-component/issues",
+  "loggers": [
+    "device_maintenance_monitor"
+  ],
+  "requirements": [],
+  "version": "0.0.1"
 }
