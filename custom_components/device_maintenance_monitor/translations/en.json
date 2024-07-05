@@ -1,0 +1,97 @@
+{
+  "entity": {
+    "binary_sensor": {
+      "maintenance_needed": {
+        "name": "Maintenance needed"
+      }
+    },
+    "button": {
+      "reset_maintenance": {
+        "name": "Reset"
+      }
+    }
+  },
+  "config": {
+    "abort": {
+      "already_configured": "Device is already configured",
+      "no_source_entity": "No source entity specified"
+    },
+    "error": {
+      "unknown": "Unknown error occurred, please see the logs for additional information"
+    },
+    "step": {
+      "user": {
+        "data": {
+          "sensor_type": "Sensor type"
+        },
+        "menu_options": {
+          "runtime": "Runtime",
+          "count": "Count",
+          "fixed_interval": "Fixed interval"
+        },
+        "title": "Choose your sensor type"
+      },
+      "runtime": {
+        "data": {
+          "entity_id": "Source entity",
+          "name": "Name",
+          "interval": "Interval"
+        },
+        "data_description": {
+          "entity_id": "Entity the maintenance monitor is tracking, the maintenance monitor will listen to state changes of this entity to be updated",
+          "name": "Leaving blank will take the name from the source entity",
+          "interval": "The amount of time the device has been powered on between each maintenance"
+        },
+        "title": "Create a hourly maintenance monitor"
+      },
+      "count": {
+        "data": {
+          "entity_id": "Source entity",
+          "name": "Name",
+          "count": "Count"
+        },
+        "data_description": {
+          "entity_id": "Entity the maintenance monitor is tracking, the maintenance monitor will listen to state changes of this entity to be updated",
+          "name": "Leaving blank will take the name from the source entity",
+          "count": "The amount of actions on counts between each maintenance"
+        },
+        "title": "Create a power on count maintenance monitor"
+      },
+      "fixed_interval": {
+        "data": {
+          "entity_id": "Source entity",
+          "name": "Name",
+          "interval": "Interval"
+        },
+        "data_description": {
+          "entity_id": "Entity the maintenance monitor is tracking, the maintenance monitor will listen to state changes of this entity to be updated",
+          "name": "Leaving blank will take the name from the source entity",
+          "interval": "The amount of time between each maintenance"
+        },
+        "title": "Create a fixed interval maintenance monitor"
+      }
+    }
+  },
+  "options": {
+    "error": {
+      "unknown": "Unknown error occurred, please see the logs for additional information"
+    },
+    "step": {
+      "init": {
+        "data": {
+          "name": "Name",
+          "interval": "Interval",
+          "count": "Count",
+          "on_states": "On states"
+        },
+        "data_description": {
+          "name": "Leaving blank will take the name from the source entity",
+          "interval": "The amount of time between each maintenance",
+          "count": "The amount of actions on counts between each maintenance",
+          "on_states": "The states that are considered as on, when the source entity is in one of these states the maintenance monitor will start counting"
+        }
+      }
+    }
+  }
+}
+

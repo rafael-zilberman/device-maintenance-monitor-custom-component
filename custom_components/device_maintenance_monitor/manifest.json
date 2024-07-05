@@ -1,0 +1,17 @@
+{
+  "domain": "device_maintenance_monitor",
+  "name": "Device Maintenance Monitor",
+  "codeowners": [
+    "@rafael-zilberman"
+  ],
+  "config_flow": true,
+  "dependencies": [],
+  "documentation": "https://github.com/rafael-zilberman/device-maintenance-monitor-custom-component",
+  "iot_class": "local_polling",
+  "issue_tracker": "https://github.com/rafael-zilberman/device-maintenance-monitor-custom-component/issues",
+  "loggers": [
+    "device_maintenance_monitor"
+  ],
+  "requirements": [],
+  "version": "0.0.1"
+}
