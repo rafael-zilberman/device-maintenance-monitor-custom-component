@@ -8,7 +8,7 @@ from homeassistant.const import EntityCategory
 from homeassistant.core import HomeAssistant, split_entity_id
 from homeassistant.helpers.dispatcher import async_dispatcher_send
 
-from .common import create_source_entity, SourceEntity
+from .common import SourceEntity, create_source_entity
 from .const import (
     DOMAIN,
     ENTITY_BUTTON_KEY,

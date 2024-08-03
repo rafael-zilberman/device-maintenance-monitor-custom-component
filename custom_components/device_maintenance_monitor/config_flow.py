@@ -17,11 +17,12 @@ from .const import (
     CONF_COUNT,
     CONF_ENTITY_ID,
     CONF_INTERVAL,
+    CONF_IS_ON_TEMPLATE,
     CONF_NAME,
     CONF_ON_STATES,
     CONF_SENSOR_TYPE,
     DOMAIN,
-    SensorType, CONF_IS_ON_TEMPLATE,
+    SensorType,
 )
 
 _LOGGER = logging.getLogger(__name__)
