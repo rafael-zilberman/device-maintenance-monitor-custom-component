@@ -69,13 +69,32 @@ class MaintenanceNeededBinarySensorEntity(BinarySensorEntity, RestoreEntity):
 
     async def async_added_to_hass(self) -> None:
         """Handle entity which will be added."""
+        _LOGGER.info(
+            "Adding binary sensor entity '%s' for device '%s' using %s sensor type",
+            self.entity_id,
+            self._logic.source_entity.entity_id,
+            self._logic.sensor_type,
+        )
         restored_last_extra_data = await self.async_get_last_extra_data()
         if restored_last_extra_data is not None:
+            _LOGGER.info(
+                "Restoring state for binary sensor entity '%s' for device '%s', restored state: %s",
+                self.entity_id,
+                self._logic.source_entity.entity_id,
+                restored_last_extra_data.as_dict(),
+            )
             self._logic.restore_state(restored_last_extra_data.as_dict())
 
         @callback
         def initial_update_listener(hass: HomeAssistant) -> None:
+            """Handle the initial update after start."""
             current_state = self.hass.states.get(self._logic.source_entity.entity_id)
+            _LOGGER.info(
+                "Handling initial update for binary sensor entity '%s' for device '%s', state: %s",
+                self.entity_id,
+                self._logic.source_entity.entity_id,
+                current_state,
+            )
             if not current_state:
                 return
             self._logic.handle_startup(current_state.state)
@@ -87,6 +106,13 @@ class MaintenanceNeededBinarySensorEntity(BinarySensorEntity, RestoreEntity):
         def source_entity_state_listener(event: Event) -> None:
             old_state = event.data.get("old_state")
             new_state = event.data.get("new_state")
+            _LOGGER.info(
+                "Handling state change for binary sensor entity '%s' for device '%s', old state: %s, new state: %s",
+                self.entity_id,
+                self._logic.source_entity.entity_id,
+                old_state,
+                new_state,
+            )
 
             if old_state is None or new_state is None:
                 return
@@ -106,6 +132,12 @@ class MaintenanceNeededBinarySensorEntity(BinarySensorEntity, RestoreEntity):
 
         @callback
         def signal_sensor_state_change_listener() -> None:
+            """Handle the sensor state change signal."""
+            _LOGGER.info(
+                "Handling sensor state change for binary sensor entity '%s' for device '%s'",
+                self.entity_id,
+                self._logic.source_entity.entity_id,
+            )
             self.async_write_ha_state()
 
         self.async_on_remove(
@@ -120,6 +152,12 @@ class MaintenanceNeededBinarySensorEntity(BinarySensorEntity, RestoreEntity):
             @callback
             def async_update(__: datetime | None = None) -> None:
                 """Update the entity."""
+                _LOGGER.info(
+                    "Updating binary sensor entity '%s' for device '%s' based on the update frequency (%s)",
+                    self.entity_id,
+                    self._logic.source_entity.entity_id,
+                    str(self._logic.update_frequency),
+                )
                 self._logic.update()
                 self.async_schedule_update_ha_state(True)
 
@@ -129,11 +167,16 @@ class MaintenanceNeededBinarySensorEntity(BinarySensorEntity, RestoreEntity):
                 )
             )
 
-    @callback
-    def async_will_remove_from_hass(self) -> None:
+    async def async_will_remove_from_hass(self) -> None:
         """Handle entity being removed from hass."""
+        _LOGGER.info(
+            "Removing binary sensor entity '%s' for device '%s', saving state: %s",
+            self.entity_id,
+            self._logic.source_entity.entity_id,
+            self.extra_restore_state_data.as_dict(),
+        )
         self._logic.update()
-        self.async_write_ha_state(True)
+        self.async_write_ha_state()
 
     @property
     def is_on(self):
