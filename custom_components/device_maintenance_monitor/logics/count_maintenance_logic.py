@@ -104,3 +104,11 @@ class CountMaintenanceLogic(MaintenanceLogic):
                 turn_on_left_until_maintenance / average_turn_on_per_day
         )
         return now + timedelta(days=days_left_until_maintenance)
+
+    @property
+    def device_turn_on_count(self) -> int:
+        """Return the turn on count of the device.
+
+        :return: The turn on count of the device.
+        """
+        return self._device_turn_on_count

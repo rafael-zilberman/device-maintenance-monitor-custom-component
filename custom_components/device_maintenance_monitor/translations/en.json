@@ -9,6 +9,17 @@
       "reset_maintenance": {
         "name": "Reset"
       }
+    },
+    "sensor": {
+      "runtime_duration": {
+        "name": "Runtime duration"
+      },
+      "predicted_maintenance_date": {
+        "name": "Predicted maintenance date"
+      },
+      "device_turn_on_count": {
+        "name": "Device turn on count"
+      }
     }
   },
   "config": {

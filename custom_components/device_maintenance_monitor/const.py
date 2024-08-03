@@ -52,3 +52,8 @@ class SensorType(StrEnum):
     RUNTIME = "runtime"
     COUNT = "count"
     FIXED_INTERVAL = "fixed_interval"
+
+    @staticmethod
+    def all_types() -> list["SensorType"]:
+        """Return all the possible sensor types."""
+        return list(SensorType)

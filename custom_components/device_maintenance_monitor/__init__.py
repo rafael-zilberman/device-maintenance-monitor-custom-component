@@ -8,7 +8,7 @@ from .const import DOMAIN
 from .device_binding import bind_config_entry_to_device
 from .logics import get_maintenance_logic
 
-PLATFORMS: list[Platform] = [Platform.BINARY_SENSOR, Platform.BUTTON]
+PLATFORMS: list[Platform] = [Platform.BINARY_SENSOR, Platform.BUTTON, Platform.SENSOR]
 
 
 async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:

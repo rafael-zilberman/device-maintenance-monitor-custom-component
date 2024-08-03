@@ -145,3 +145,11 @@ class RuntimeMaintenanceLogic(MaintenanceLogic):
         now = datetime.now()
         self._runtime_duration += now - self._last_device_on_time
         self._last_device_on_time = now
+
+    @property
+    def runtime_duration(self) -> timedelta:
+        """Return the total runtime duration of the device.
+
+        :return: The total runtime duration of the device.
+        """
+        return self._runtime_duration
