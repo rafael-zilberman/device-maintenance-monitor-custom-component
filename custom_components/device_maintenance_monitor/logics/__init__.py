@@ -1,9 +1,12 @@
 """The logics module for device maintenance monitor."""
+import logging
+
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.core import HomeAssistant
+from homeassistant.helpers import config_validation as cv
+from homeassistant.helpers.template import Template
 
-from ..common import create_source_entity
-from ..const import CONF_ENTITY_ID, CONF_SENSOR_TYPE
+from ..const import CONF_INTERVAL, CONF_IS_ON_TEMPLATE, CONF_SENSOR_TYPE
 from .base_maintenance_logic import MaintenanceLogic
 from .count_maintenance_logic import CountMaintenanceLogic
 from .fixed_interval_maintenance_logic import FixedIntervalMaintenanceLogic
@@ -15,9 +18,11 @@ IMPLEMENTED_LOGICS: list[type[MaintenanceLogic]] = [
     FixedIntervalMaintenanceLogic,
 ]
 
+_LOGGER = logging.getLogger(__name__)
+
 
 async def get_maintenance_logic(
-    hass: HomeAssistant, config_entry: ConfigEntry
+        hass: HomeAssistant, config_entry: ConfigEntry
 ) -> MaintenanceLogic:
     """Get the maintenance logic for the config entry.
 
@@ -29,24 +34,22 @@ async def get_maintenance_logic(
     if sensor_type is None:
         raise ValueError(f"{CONF_SENSOR_TYPE} is required in {config_entry.data}")
 
-    source_entity_id = config_entry.data.get(CONF_ENTITY_ID)
-    if source_entity_id is None:
-        raise ValueError(f"{CONF_ENTITY_ID} is required in {config_entry.data}")
-
-    logic_type_by_sensor_type = {
-        logic.sensor_type: logic for logic in IMPLEMENTED_LOGICS
-    }
-
-    sensor_logic = logic_type_by_sensor_type.get(sensor_type)
-    if sensor_logic is None:
-        raise NotImplementedError(f"sensor_type {sensor_type} is not implemented")
-
-    source_entity = await create_source_entity(
-        source_entity_id,
-        hass,
-    )
     config_data = dict(config_entry.data)
-    return sensor_logic(
-        config_data=config_data,
-        source_entity=source_entity,
-    )
+    interval = config_data.get(CONF_INTERVAL)
+    if interval is not None:
+        config_data[CONF_INTERVAL] = cv.time_period_dict(config_data.get(CONF_INTERVAL))
+
+    is_on_template_str: str | None = config_data.get(CONF_IS_ON_TEMPLATE)
+    if is_on_template_str is not None:
+        is_on_template = Template(is_on_template_str, hass)
+
+        async def render_is_on_template() -> bool:
+            return is_on_template.async_render()
+
+        config_data[CONF_IS_ON_TEMPLATE] = render_is_on_template
+
+    for logic in IMPLEMENTED_LOGICS:
+        if logic.sensor_type == sensor_type:
+            return logic.get_instance(config_data)
+
+    raise NotImplementedError(f"sensor_type {sensor_type} is not implemented")

@@ -1,13 +1,11 @@
 """The Device Maintenance Monitor integration."""
-from dataclasses import dataclass
 from datetime import datetime, timedelta
 import logging
-
-from homeassistant.helpers import config_validation as cv
 
 from ..const import (
     CONF_ENTITY_ID,
     CONF_INTERVAL,
+    CONF_IS_ON_TEMPLATE,
     CONF_NAME,
     CONF_ON_STATES,
     DEFAULT_ON_STATES,
@@ -15,16 +13,9 @@ from ..const import (
     STATE_RUNTIME_DURATION,
     SensorType,
 )
-from .base_maintenance_logic import MaintenanceData, MaintenanceLogic
+from .base_maintenance_logic import IsOnExpression, MaintenanceLogic
 
 _LOGGER = logging.getLogger(__name__)
-
-
-@dataclass
-class RuntimeMaintenanceData(MaintenanceData):
-    """A data class that represents the runtime maintenance data of a device."""
-
-    interval: timedelta
 
 
 class RuntimeMaintenanceLogic(MaintenanceLogic):
@@ -32,16 +23,45 @@ class RuntimeMaintenanceLogic(MaintenanceLogic):
 
     sensor_type: SensorType = SensorType.RUNTIME
 
-    def _setup(self):
+    _interval: timedelta  # The interval for maintenance
+
+    def __init__(self, *,
+                 name: str,
+                 interval: timedelta,
+                 entity_id: str | None,
+                 on_states: list[str] | None,
+                 is_on_expression: IsOnExpression | None):
+        """Initialize a new instance of the MaintenanceLogic class.
+
+        :param name: The name of the entity.
+        :param interval: The interval for maintenance.
+        :param entity_id: The unique identifier of the source entity.
+        :param on_states: The states in which the device is considered to be "on".
+        :param is_on_expression: The expression to determine if the device is on.
+        """
+        super().__init__(
+            name=name,
+            entity_id=entity_id,
+            on_states=on_states,
+            is_on_expression=is_on_expression,
+        )
+        self._interval = interval
         self._last_device_on_time = None
         self._runtime_duration = timedelta(seconds=0)
 
-    def _get_logic_data(self, data: dict) -> MaintenanceData:
-        return RuntimeMaintenanceData(
-            entity_id=data.get(CONF_ENTITY_ID),
-            name=data.get(CONF_NAME),
-            on_states=data.get(CONF_ON_STATES) or DEFAULT_ON_STATES,
-            interval=cv.time_period_dict(data.get(CONF_INTERVAL)),
+    @classmethod
+    def get_instance(cls, config: dict) -> "RuntimeMaintenanceLogic":
+        """Return an instance of the maintenance logic.
+
+        :param config: The configuration data of the device.
+        :return: An instance of the maintenance logic.
+        """
+        return RuntimeMaintenanceLogic(
+            name=config.get(CONF_NAME),
+            interval=config.get(CONF_INTERVAL),
+            entity_id=config.get(CONF_ENTITY_ID),
+            on_states=config.get(CONF_ON_STATES) or DEFAULT_ON_STATES,
+            is_on_expression=config.get(CONF_IS_ON_TEMPLATE),
         )
 
     def _reset(self):
@@ -70,7 +90,7 @@ class RuntimeMaintenanceLogic(MaintenanceLogic):
 
         :return: True if maintenance is needed, False otherwise.
         """
-        return self._runtime_duration >= self._data.interval
+        return self._runtime_duration >= self._interval
 
     def _get_state(self) -> dict[str, str]:
         return {
@@ -108,16 +128,16 @@ class RuntimeMaintenanceLogic(MaintenanceLogic):
         # TODO: move to consts
         now = datetime.now()
         days_since_last_maintenance = (
-            now - self._last_maintenance_date
-        ).total_seconds() / 86400
+                                              now - self._last_maintenance_date
+                                      ).total_seconds() / 86400
         if days_since_last_maintenance == 0:
             return None
         average_runtime_per_day = self._runtime_duration / days_since_last_maintenance
         if average_runtime_per_day == timedelta(seconds=0):
             return None
-        runtime_left_until_maintenance = self._data.interval - self._runtime_duration
+        runtime_left_until_maintenance = self._interval - self._runtime_duration
         days_left_until_maintenance = (
-            runtime_left_until_maintenance / average_runtime_per_day
+                runtime_left_until_maintenance / average_runtime_per_day
         )
         return now + timedelta(days=days_left_until_maintenance)
 

@@ -8,6 +8,7 @@ from homeassistant.const import EntityCategory
 from homeassistant.core import HomeAssistant, split_entity_id
 from homeassistant.helpers.dispatcher import async_dispatcher_send
 
+from .common import create_source_entity, SourceEntity
 from .const import (
     DOMAIN,
     ENTITY_BUTTON_KEY,
@@ -23,8 +24,11 @@ _LOGGER = logging.getLogger(__name__)
 async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry, async_add_entities):
     """Set up the button platform."""
     logic: MaintenanceLogic = hass.data[DOMAIN][entry.entry_id]
+    source_entity = None
+    if logic.source_entity_id:
+        source_entity = await create_source_entity(logic.source_entity_id, hass)
     async_add_entities([
-        ResetMaintenanceButtonEntity(logic, entry.unique_id),
+        ResetMaintenanceButtonEntity(logic, entry.unique_id, source_entity),
     ])
 
 
@@ -36,7 +40,7 @@ class MaintenanceButtonEntityDescription(ButtonEntityDescription):
 class ResetMaintenanceButtonEntity(ButtonEntity):
     """A class that represents a button entity for resetting the maintenance monitor metrics."""
 
-    def __init__(self, logic: MaintenanceLogic, unique_id: str):
+    def __init__(self, logic: MaintenanceLogic, unique_id: str, source_entity: SourceEntity | None):
         """Initialize the button entity.
 
         :param logic: The maintenance logic to be used.
@@ -48,10 +52,10 @@ class ResetMaintenanceButtonEntity(ButtonEntity):
             entity_category=EntityCategory.CONFIG,
         )
         self._attr_unique_id = f"{unique_id}_reset_maintenance"
-        self._attr_device_info = get_device_info(logic.source_entity)
-
-        object_id = split_entity_id(logic.source_entity.entity_id)[1]
-        self.entity_id = f"binary_sensor.{object_id}_reset_maintenance"
+        if source_entity:
+            self._attr_device_info = get_device_info(source_entity)
+            object_id = split_entity_id(logic.source_entity_id)[1]
+            self.entity_id = f"binary_sensor.{object_id}_reset_maintenance"
 
         self._logic = logic
 

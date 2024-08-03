@@ -1,10 +1,10 @@
 """Provides the base class for the maintenance logic of a device."""
 from abc import ABC, abstractmethod
-from dataclasses import dataclass
+from collections.abc import Awaitable, Callable
 from datetime import datetime, timedelta
-from typing import Generic, TypeVar, final
+import logging
+from typing import final
 
-from ..common import SourceEntity
 from ..const import (
     DATE_FORMAT,
     STATE_LAST_MAINTENANCE_DATE,
@@ -12,51 +12,54 @@ from ..const import (
     SensorType,
 )
 
+_LOGGER = logging.getLogger(__name__)
 
-@dataclass
-class MaintenanceData:
-    """A data class that represents the maintenance data of a device."""
-
-    entity_id: str  # The unique identifier of the source entity
-    name: str  # The name of the entity
-    on_states: list[str]  # The states in which the device is considered to be "on"
+IsOnExpression = Callable[[], Awaitable[bool]]
 
 
-TData = TypeVar("TData", bound=MaintenanceData)
-
-
-class MaintenanceLogic(ABC, Generic[TData]):
+class MaintenanceLogic(ABC):
     """An abstract base class that represents the logic for maintaining a device."""
 
     sensor_type: SensorType  # The type of sensor used by the configuration
 
-    _data: TData  # The maintenance data
-    _source_entity: SourceEntity  # The source entity
+    _name: str  # The name of the entity
+    _entity_id: str | None  # The unique identifier of the source entity
+    _on_states: list[str] | None  # The states in which the device is considered to be "on"
+    _is_on_expression: IsOnExpression | None  # The expression to determine if the device is on
 
-    def __init__(self, *, config_data: dict, source_entity: SourceEntity):
-        """Initialize a new instance of the MaintenanceLogic class."""
-        self._data = self._get_logic_data(config_data)
-        self._source_entity = source_entity
+    def __init__(self, *,
+                 name: str,
+                 entity_id: str | None,
+                 on_states: list[str] | None,
+                 is_on_expression: IsOnExpression | None):
+        """Initialize a new instance of the MaintenanceLogic class.
+
+        :param name: The name of the entity.
+        :param entity_id: The unique identifier of the source entity.
+        :param on_states: The states in which the device is considered to be "on".
+        :param is_on_expression: The expression to determine if the device is on.
+        """
+        self._name = name
+        self._entity_id = entity_id
+        self._on_states = on_states
+        self._is_on_expression = is_on_expression
 
         self._last_maintenance_date = datetime.now()  # The date of the last maintenance
-        self._setup()
+        self._last_state_on = False  # The state of the device during the last update
 
-    def _setup(self):
-        """Provide additional setup logic."""
+    @classmethod
+    def get_instance(cls, config: dict) -> "MaintenanceLogic":
+        """Return an instance of the maintenance logic.
 
-    @abstractmethod
-    def _get_logic_data(self, data: dict) -> TData:
-        """Return the maintenance data for the device.
-
-        :param data: The configuration data of the device.
-        :return: The maintenance data of the device.
+        :param config: The configuration data of the device.
+        :return: An instance of the maintenance logic.
         """
         raise NotImplementedError
 
     @property
-    def source_entity(self) -> SourceEntity:
+    def source_entity_id(self) -> str:
         """Returns the source entity of the device."""
-        return self._source_entity
+        return self._entity_id
 
     @final
     def reset(self):
@@ -68,39 +71,58 @@ class MaintenanceLogic(ABC, Generic[TData]):
     def _reset(self):
         """Provide additional reset logic."""
 
+    async def _is_device_on(self, state: str) -> bool:
+        """Return whether the device is on.
+
+        :return: True if the device is on; otherwise, False.
+        """
+        if self._is_on_expression:
+            return await self._is_on_expression()
+        return state in self._on_states
+
     @final
-    def handle_source_entity_state_change(self, old_state: str, new_state: str):
+    async def handle_source_entity_state_change(self, old_state: str, new_state: str):
         """Handle the state change of the source entity.
 
         :param old_state: The previous state of the source entity.
         :param new_state: The new state of the source entity.
         """
-        is_old_state_on = old_state in self._data.on_states
-        is_new_state_on = new_state in self._data.on_states
-        if is_old_state_on == is_new_state_on:
+        is_new_state_on = await self._is_device_on(new_state)
+        _LOGGER.info(
+            "Handling state change for device '%s', old state: %s, new state: %s (%s)",
+            self._name,
+            old_state,
+            new_state,
+            is_new_state_on,
+        )
+        if is_new_state_on == self._last_state_on:
             # The state hasn't changed
             return
 
         if is_new_state_on:
             # The device has turned on.
             self._handle_turn_on()
+            self._last_state_on = True
         else:
             # The device has turned off.
             self._handle_turn_off()
+            self._last_state_on = False
 
     @final
-    def handle_startup(self, current_state: str):
+    async def handle_startup(self, current_state: str):
         """Handle the startup of the device.
 
         :param current_state: The current state of the device.
         """
-        is_current_state_on = current_state in self._data.on_states
+        is_current_state_on = await self._is_device_on(current_state)
         if is_current_state_on:
             # The device is on.
             self._handle_turn_on()
+            self._last_state_on = True
         else:
             # The device is off.
             self._handle_turn_off()
+            self._last_state_on = False
 
     def _handle_turn_on(self):
         """Provide additional logic when the device turns on."""

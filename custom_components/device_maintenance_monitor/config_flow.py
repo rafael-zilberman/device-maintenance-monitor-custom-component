@@ -21,7 +21,7 @@ from .const import (
     CONF_ON_STATES,
     CONF_SENSOR_TYPE,
     DOMAIN,
-    SensorType,
+    SensorType, CONF_IS_ON_TEMPLATE,
 )
 
 _LOGGER = logging.getLogger(__name__)
@@ -32,29 +32,29 @@ SENSOR_TYPE_MENU = {
     SensorType.FIXED_INTERVAL: "Fixed Interval",
 }
 
-SETUP_SCHEMA = {
-    vol.Required(CONF_ENTITY_ID): selector.EntitySelector(),
-    vol.Optional(CONF_NAME): selector.TextSelector(),
-}
-
 CONFIG_SCHEMA = {
     vol.Optional(CONF_NAME): selector.TextSelector(),
 }
 
 SCHEMA_RUNTIME = {
+    vol.Required(CONF_ENTITY_ID): selector.EntitySelector(),
     vol.Required(CONF_INTERVAL): selector.DurationSelector(),
+    vol.Optional(CONF_IS_ON_TEMPLATE): selector.TemplateSelector(),
 }
 
 SCHEMA_COUNT = {
+    vol.Required(CONF_ENTITY_ID): selector.EntitySelector(),
     vol.Required(CONF_COUNT): selector.NumberSelector(
         selector.NumberSelectorConfig(
             min=1,
             mode=selector.NumberSelectorMode.BOX,
         ),
     ),
+    vol.Optional(CONF_IS_ON_TEMPLATE): selector.TemplateSelector(),
 }
 
 SCHEMA_FIXED_INTERVAL = {
+    vol.Optional(CONF_ENTITY_ID): selector.EntitySelector(),
     vol.Required(CONF_INTERVAL): selector.DurationSelector(
         selector.DurationSelectorConfig(
             enable_day=True,
@@ -150,7 +150,7 @@ class ConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
 
     @staticmethod
     def _build_setup_schema(sensor_type: SensorType):
-        schema = vol.Schema(SETUP_SCHEMA)
+        schema = vol.Schema(CONFIG_SCHEMA)
         return schema.extend(_get_schema_by_sensor_type(sensor_type))
 
     @callback
@@ -161,19 +161,25 @@ class ConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
     ) -> FlowResult:
         """Create the config entry."""
         source_entity_id = user_input.get(CONF_ENTITY_ID)
-        if source_entity_id is None:
-            return self.async_abort(reason="no_source_entity")
-
-        source_entity = await create_source_entity(
-            source_entity_id,
-            self.hass,
-        )
-        if source_entity is None:
-            return self.async_abort(reason="no_source_entity")
-
-        name = user_input.get(CONF_NAME, f"{source_entity.name} Maintenance Monitor")
 
         entry_config: ConfigType = copy.copy(user_input)
+
+        # Set unique_id to prevent duplicate entries:
+        if source_entity_id:
+            source_entity = await create_source_entity(
+                source_entity_id,
+                self.hass,
+            )
+            name = user_input.get(CONF_NAME, f"{source_entity.name} Maintenance Monitor")
+            source_unique_id = source_entity.unique_id or (source_entity_id.replace(".", "_"))
+            await self.async_set_unique_id(f"mm_{source_unique_id}")
+        else:
+            name = user_input.get(CONF_NAME)
+            if not name:
+                return self.async_abort(reason="missing_name")
+            await self.async_set_unique_id(f"mm_{name}")
+        self._abort_if_unique_id_configured()
+
         entry_config.update(
             {
                 CONF_SENSOR_TYPE: selected_sensor_type,
@@ -181,12 +187,6 @@ class ConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
                 CONF_NAME: name,
             }
         )
-
-        # Set unique_id to prevent duplicate entries:
-        source_unique_id = source_entity.unique_id or (source_entity_id.replace(".", "_"))
-        await self.async_set_unique_id(f"mm_{source_unique_id}")
-        self._abort_if_unique_id_configured()
-
         return self.async_create_entry(title=str(name), data=entry_config)
 
 
@@ -266,28 +266,32 @@ class OptionsFlowHandler(OptionsFlow):
         schema = vol.Schema(CONFIG_SCHEMA)
         data_schema = schema.extend(_get_schema_by_sensor_type(self.sensor_type))
 
-        # Get the states of the source entity
-        options = ["on", "off"]
-        for capability in ["hvac_modes", "options"]:
-            capabilities = get_capability(self.hass, self.source_entity_id, capability)
-            if capabilities:
-                options = capabilities
-                break
-        # Add on_states to the schema
-        data_schema = data_schema.extend(
-            {
-                vol.Optional(CONF_ON_STATES): selector.SelectSelector(
-                    selector.SelectSelectorConfig(
-                        options=options,
+        if self.source_entity_id:
+            # Get the optional states of the source entity
+            options = self._get_source_entity_state_options()
+            data_schema = data_schema.extend(
+                {
+                    vol.Optional(CONF_ON_STATES): selector.SelectSelector(
+                        selector.SelectSelectorConfig(
+                            options=options,
+                        ),
                     ),
-                ),
-            }
-        )
+                }
+            )
 
         return _fill_schema_defaults(
             data_schema,
             self.current_config,
         )
+
+    def _get_source_entity_state_options(self) -> list[str]:
+        """Get the state options of the source entity."""
+        for capability in ["hvac_modes", "options"]:
+            capabilities = get_capability(self.hass, self.source_entity_id, capability)
+            if capabilities:
+                return capabilities
+
+        return ["on", "off"]
 
 
 def _fill_schema_defaults(
