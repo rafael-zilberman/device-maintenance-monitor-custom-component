@@ -3,6 +3,7 @@ from homeassistant.config_entries import ConfigEntry
 from homeassistant.const import Platform
 from homeassistant.core import HomeAssistant
 
+from .common import create_source_entity
 from .const import DOMAIN
 from .device_binding import bind_config_entry_to_device
 from .logics import get_maintenance_logic
@@ -17,7 +18,10 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
     logic = await get_maintenance_logic(hass, entry)
 
     # Bind the config entry to the device from the source entity if it is not already bound
-    bind_config_entry_to_device(hass, entry, logic.source_entity)
+    source_entity = None
+    if logic.source_entity_id:
+        source_entity = await create_source_entity(logic.source_entity_id, hass)
+        bind_config_entry_to_device(hass, entry, source_entity)
 
     # Set up sensors, binary sensors, and buttons
     hass.data.setdefault(DOMAIN, {})[entry.entry_id] = logic

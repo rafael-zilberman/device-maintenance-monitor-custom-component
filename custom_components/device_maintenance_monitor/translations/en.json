@@ -13,8 +13,7 @@
   },
   "config": {
     "abort": {
-      "already_configured": "Device is already configured",
-      "no_source_entity": "No source entity specified"
+      "missing_name": "Name is required when no source entity is provided"
     },
     "error": {
       "unknown": "Unknown error occurred, please see the logs for additional information"

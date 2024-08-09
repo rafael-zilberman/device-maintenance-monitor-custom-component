@@ -1,23 +1,29 @@
 """The logics module for device maintenance monitor."""
+import logging
+
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.core import HomeAssistant
+from homeassistant.exceptions import TemplateError
+from homeassistant.helpers import config_validation as cv
+from homeassistant.helpers.template import Template
 
-from ..common import create_source_entity
-from ..const import CONF_ENTITY_ID, CONF_SENSOR_TYPE
+from ..const import CONF_INTERVAL, CONF_IS_ON_TEMPLATE, CONF_SENSOR_TYPE, SensorType
 from .base_maintenance_logic import MaintenanceLogic
 from .count_maintenance_logic import CountMaintenanceLogic
 from .fixed_interval_maintenance_logic import FixedIntervalMaintenanceLogic
 from .runtime_maintenance_logic import RuntimeMaintenanceLogic
 
-IMPLEMENTED_LOGICS: list[type[MaintenanceLogic]] = [
-    RuntimeMaintenanceLogic,
-    CountMaintenanceLogic,
-    FixedIntervalMaintenanceLogic,
-]
+IMPLEMENTED_LOGICS: dict[SensorType, type[MaintenanceLogic]] = {
+    SensorType.RUNTIME: RuntimeMaintenanceLogic,
+    SensorType.COUNT: CountMaintenanceLogic,
+    SensorType.FIXED_INTERVAL: FixedIntervalMaintenanceLogic,
+}
+
+_LOGGER = logging.getLogger(__name__)
 
 
 async def get_maintenance_logic(
-    hass: HomeAssistant, config_entry: ConfigEntry
+        hass: HomeAssistant, config_entry: ConfigEntry
 ) -> MaintenanceLogic:
     """Get the maintenance logic for the config entry.
 
@@ -29,24 +35,26 @@ async def get_maintenance_logic(
     if sensor_type is None:
         raise ValueError(f"{CONF_SENSOR_TYPE} is required in {config_entry.data}")
 
-    source_entity_id = config_entry.data.get(CONF_ENTITY_ID)
-    if source_entity_id is None:
-        raise ValueError(f"{CONF_ENTITY_ID} is required in {config_entry.data}")
+    config_data = dict(config_entry.data)
+    interval = config_data.get(CONF_INTERVAL)
+    if interval is not None:
+        config_data[CONF_INTERVAL] = cv.time_period_dict(config_data.get(CONF_INTERVAL))
 
-    logic_type_by_sensor_type = {
-        logic.sensor_type: logic for logic in IMPLEMENTED_LOGICS
-    }
+    is_on_template_str: str | None = config_data.get(CONF_IS_ON_TEMPLATE)
+    if is_on_template_str is not None:
+        is_on_template = Template(is_on_template_str, hass)
 
-    sensor_logic = logic_type_by_sensor_type.get(sensor_type)
-    if sensor_logic is None:
+        async def render_is_on_template() -> bool:
+            try:
+                return is_on_template.async_render()
+            except TemplateError as e:
+                _LOGGER.error("Error rendering is on template: %s", e)
+                return False
+
+        config_data[CONF_IS_ON_TEMPLATE] = render_is_on_template
+
+    logic = IMPLEMENTED_LOGICS.get(sensor_type)
+    if not logic:
         raise NotImplementedError(f"sensor_type {sensor_type} is not implemented")
 
-    source_entity = await create_source_entity(
-        source_entity_id,
-        hass,
-    )
-    config_data = dict(config_entry.data)
-    return sensor_logic(
-        config_data=config_data,
-        source_entity=source_entity,
-    )
+    return logic.get_instance(config_data)
