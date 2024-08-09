@@ -3,9 +3,12 @@ import logging
 from typing import NamedTuple
 
 from homeassistant.components.light import ATTR_SUPPORTED_COLOR_MODES, ColorMode
-from homeassistant.core import HomeAssistant, split_entity_id
+from homeassistant.core import HomeAssistant, callback, split_entity_id
 import homeassistant.helpers.device_registry as dr
+from homeassistant.helpers.entity import async_generate_entity_id
 import homeassistant.helpers.entity_registry as er
+
+from .const import DOMAIN
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -70,11 +73,11 @@ async def create_source_entity(entity_id: str, hass: HomeAssistant) -> SourceEnt
 
 
 def get_wrapped_entity_name(
-    hass: HomeAssistant,
-    entity_id: str,
-    object_id: str,
-    entity_entry: er.RegistryEntry | None,
-    device_entry: dr.DeviceEntry | None,
+        hass: HomeAssistant,
+        entity_id: str,
+        object_id: str,
+        entity_entry: er.RegistryEntry | None,
+        device_entry: dr.DeviceEntry | None,
 ) -> str:
     """Construct entity name based on the wrapped entity."""
     if entity_entry:
@@ -88,3 +91,51 @@ def get_wrapped_entity_name(
         return str(entity_state.name)
 
     return object_id
+
+
+def get_entity_id_by_unique_id(
+        hass: HomeAssistant,
+        sensor_domain: str,
+        unique_id: str,
+) -> str | None:
+    """Get the entity_id based on the unique_id.
+
+    :param hass: The Home Assistant instance.
+    :param sensor_domain: The domain of the sensor.
+    :param unique_id: The unique identifier of the entity.
+    :return: The entity_id of the entity.
+    """
+    entity_reg = er.async_get(hass)
+    return entity_reg.async_get_entity_id(sensor_domain, DOMAIN, unique_id)
+
+
+@callback
+def generate_sensor_entity_id(
+        hass: HomeAssistant,
+        sensor_domain: str,
+        suffix: str,
+        source_entity: SourceEntity | None = None,
+        name: str | None = None,
+        unique_id: str | None = None,
+) -> str:
+    """Generate the entity_id to use for a sensor.
+
+    :param hass: The Home Assistant instance.
+    :param sensor_domain: The domain of the sensor.
+    :param suffix: The suffix of the sensor.
+    :param source_entity: The source entity of the sensor.
+    :param name: The name of the sensor.
+    :param unique_id: The unique identifier of the sensor.
+    :return: The entity_id of the sensor.
+    """
+    if entity_id := get_entity_id_by_unique_id(hass, sensor_domain, unique_id):
+        return entity_id
+    if source_entity:
+        object_id = source_entity.object_id
+    else:
+        object_id = name
+    return async_generate_entity_id(
+        sensor_domain + ".{}",
+        f"{object_id}_{suffix}",
+        hass=hass,
+    )

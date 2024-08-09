@@ -201,3 +201,9 @@ class MaintenanceLogic(ABC):
 
     def update(self):
         """Provide additional update logic."""
+
+    @final
+    @property
+    def name(self) -> str:
+        """Return the name of the entity."""
+        return self._name

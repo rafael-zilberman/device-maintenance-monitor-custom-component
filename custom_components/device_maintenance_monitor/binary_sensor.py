@@ -9,7 +9,7 @@ from homeassistant.components.binary_sensor import (
     BinarySensorEntityDescription,
 )
 from homeassistant.config_entries import ConfigEntry
-from homeassistant.core import Event, HomeAssistant, callback, split_entity_id
+from homeassistant.core import Event, HomeAssistant, callback
 from homeassistant.helpers import start
 from homeassistant.helpers.dispatcher import async_dispatcher_connect
 from homeassistant.helpers.event import (
@@ -18,7 +18,7 @@ from homeassistant.helpers.event import (
 )
 from homeassistant.helpers.restore_state import RestoredExtraData, RestoreEntity
 
-from .common import SourceEntity, create_source_entity
+from .common import SourceEntity, create_source_entity, generate_sensor_entity_id
 from .const import (
     DOMAIN,
     ENTITY_BINARY_SENSOR_KEY,
@@ -39,8 +39,15 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry, async_add_e
     source_entity = None
     if logic.source_entity_id:
         source_entity = await create_source_entity(logic.source_entity_id, hass)
+    # TODO: Create logging helpers
+    _LOGGER.info(
+        "Setting up binary sensor entity for entry '%s' of device '%s' using %s sensor type",
+        entry,
+        logic.source_entity_id,
+        logic.sensor_type
+    )
     async_add_entities([
-        MaintenanceNeededBinarySensorEntity(logic, entry.unique_id, source_entity),
+        MaintenanceNeededBinarySensorEntity(hass, logic, entry.unique_id, source_entity),
     ])
 
 
@@ -52,7 +59,7 @@ class MaintenanceBinarySensorEntityDescription(BinarySensorEntityDescription):
 class MaintenanceNeededBinarySensorEntity(BinarySensorEntity, RestoreEntity):
     """A class that represents a binary sensor entity for indicating whether maintenance is needed."""
 
-    def __init__(self, logic: MaintenanceLogic, unique_id: str, source_entity: SourceEntity | None):
+    def __init__(self, hass: HomeAssistant, logic: MaintenanceLogic, unique_id: str, source_entity: SourceEntity | None):
         """Initialize the binary sensor entity.
 
         :param logic: The maintenance logic to be  used.
@@ -66,8 +73,14 @@ class MaintenanceNeededBinarySensorEntity(BinarySensorEntity, RestoreEntity):
         self._attr_unique_id = f"{unique_id}_maintenance_needed"
         if source_entity:
             self._attr_device_info = get_device_info(source_entity)
-            object_id = split_entity_id(logic.source_entity_id)[1]
-            self.entity_id = f"binary_sensor.{object_id}_maintenance_needed"
+        self.entity_id = generate_sensor_entity_id(
+            hass,
+            "binary_sensor",
+            "maintenance_needed",
+            source_entity,
+            logic.name,
+            self.unique_id,
+        )
 
         self._logic = logic
 
