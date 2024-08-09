@@ -9,6 +9,11 @@
       "reset_maintenance": {
         "name": "Reset"
       }
+    },
+    "sensor": {
+      "predicted_maintenance_date": {
+        "name": "Predicted maintenance date"
+      }
     }
   },
   "config": {
