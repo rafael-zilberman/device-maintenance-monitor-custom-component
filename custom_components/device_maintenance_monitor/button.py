@@ -46,7 +46,11 @@ class MaintenanceButtonEntityDescription(ButtonEntityDescription):
 class ResetMaintenanceButtonEntity(ButtonEntity):
     """A class that represents a button entity for resetting the maintenance monitor metrics."""
 
-    def __init__(self, hass: HomeAssistant, logic: MaintenanceLogic, unique_id: str, source_entity: SourceEntity | None):
+    def __init__(self,
+                 hass: HomeAssistant,
+                 logic: MaintenanceLogic,
+                 unique_id: str,
+                 source_entity: SourceEntity | None):
         """Initialize the button entity.
 
         :param logic: The maintenance logic to be used.
@@ -75,9 +79,7 @@ class ResetMaintenanceButtonEntity(ButtonEntity):
         """Handle the press of the button."""
         # Reset the device maintenance monitor metrics
         self._logic.reset()
-
-        # Update the state of the button
         self.async_write_ha_state()
 
-        # Notify the sensor to update its state
+        # Notify all sensors to update its state
         async_dispatcher_send(self.hass, SIGNAL_SENSOR_STATE_CHANGE)
