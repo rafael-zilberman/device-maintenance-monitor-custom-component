@@ -10,8 +10,11 @@ from homeassistant.components.binary_sensor import (
 )
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.core import Event, HomeAssistant, callback
-from homeassistant.helpers import start
-from homeassistant.helpers.dispatcher import async_dispatcher_connect
+from homeassistant.helpers import entity_platform, start
+from homeassistant.helpers.dispatcher import (
+    async_dispatcher_connect,
+    async_dispatcher_send,
+)
 from homeassistant.helpers.event import (
     async_track_state_change_event,
     async_track_time_interval,
@@ -23,6 +26,7 @@ from .const import (
     DOMAIN,
     ENTITY_BINARY_SENSOR_KEY,
     ENTITY_BINARY_SENSOR_TRANSLATION_KEY,
+    SERVICE_RESET_MAINTENANCE,
     SIGNAL_SENSOR_STATE_CHANGE,
 )
 from .device_binding import get_device_info
@@ -31,10 +35,25 @@ from .logics import MaintenanceLogic
 _LOGGER = logging.getLogger(__name__)
 
 
+@callback
+def register_entity_services() -> None:
+    """Register the different entity services."""
+    platform = entity_platform.async_get_current_platform()
+    platform.async_register_entity_service(
+        SERVICE_RESET_MAINTENANCE,
+        {},
+        "async_reset",
+    )
+
+
 # TODO: Register services
 async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry, async_add_entities):
     """Set up the binary sensor platform."""
 
+    # Register the entity services
+    register_entity_services()
+
+    # Register the binary sensor entity
     logic: MaintenanceLogic = hass.data[DOMAIN][entry.entry_id]
     source_entity = None
     if logic.source_entity_id:
@@ -59,7 +78,11 @@ class MaintenanceBinarySensorEntityDescription(BinarySensorEntityDescription):
 class MaintenanceNeededBinarySensorEntity(BinarySensorEntity, RestoreEntity):
     """A class that represents a binary sensor entity for indicating whether maintenance is needed."""
 
-    def __init__(self, hass: HomeAssistant, logic: MaintenanceLogic, unique_id: str, source_entity: SourceEntity | None):
+    def __init__(self,
+                 hass: HomeAssistant,
+                 logic: MaintenanceLogic,
+                 unique_id: str,
+                 source_entity: SourceEntity | None):
         """Initialize the binary sensor entity.
 
         :param logic: The maintenance logic to be  used.
@@ -117,6 +140,9 @@ class MaintenanceNeededBinarySensorEntity(BinarySensorEntity, RestoreEntity):
                 await self._logic.handle_startup(current_state.state)
                 self.async_write_ha_state()
 
+                # Notify all sensors to update its state
+                async_dispatcher_send(self.hass, SIGNAL_SENSOR_STATE_CHANGE)
+
             self.async_on_remove(start.async_at_start(self.hass, initial_update_listener))
 
         if self._logic.source_entity_id:
@@ -140,6 +166,9 @@ class MaintenanceNeededBinarySensorEntity(BinarySensorEntity, RestoreEntity):
                     old_state.state, new_state.state
                 )
                 self.async_write_ha_state()
+
+                # Notify all sensors to update its state
+                async_dispatcher_send(self.hass, SIGNAL_SENSOR_STATE_CHANGE)
 
             self.async_on_remove(
                 async_track_state_change_event(
@@ -197,6 +226,9 @@ class MaintenanceNeededBinarySensorEntity(BinarySensorEntity, RestoreEntity):
         self._logic.update()
         self.async_write_ha_state()
 
+        # Notify all sensors to update its state
+        async_dispatcher_send(self.hass, SIGNAL_SENSOR_STATE_CHANGE)
+
     @property
     def is_on(self):
         """Return the state of the binary sensor."""
@@ -211,3 +243,19 @@ class MaintenanceNeededBinarySensorEntity(BinarySensorEntity, RestoreEntity):
     def extra_restore_state_data(self) -> RestoredExtraData:
         """Return the state attributes."""
         return RestoredExtraData(self._logic.get_state())
+
+    @callback
+    def async_reset(self):
+        """Handle the reset of the binary sensor."""
+        _LOGGER.info(
+            "Resetting entity '%s' for device '%s'",
+            self.entity_id,
+            self._logic.source_entity_id
+        )
+
+        # Reset the device maintenance monitor metrics
+        self._logic.reset()
+        self.async_write_ha_state()
+
+        # Notify all sensors to update its state
+        async_dispatcher_send(self.hass, SIGNAL_SENSOR_STATE_CHANGE)

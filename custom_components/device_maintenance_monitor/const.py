@@ -32,6 +32,9 @@ STATE_PREDICTED_MAINTENANCE_DATE: Final = "predicted_maintenance_date"
 STATE_DEVICE_TURN_ON_COUNT: Final = "device_turn_on_count"
 STATE_RUNTIME_DURATION: Final = "runtime_duration"
 
+# Services
+SERVICE_RESET_MAINTENANCE: Final = "reset_maintenance"
+
 # Entities
 ENTITY_BINARY_SENSOR_KEY: Final = "maintenance_needed"
 ENTITY_BINARY_SENSOR_TRANSLATION_KEY: Final = "maintenance_needed"

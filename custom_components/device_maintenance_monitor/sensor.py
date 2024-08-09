@@ -1,8 +1,8 @@
 """The sensors for the Device Maintenance Monitor integration."""
-import logging
 from collections.abc import Callable
 from dataclasses import dataclass
 from datetime import datetime
+import logging
 
 from homeassistant.components.sensor import (
     SensorDeviceClass,
@@ -15,11 +15,7 @@ from homeassistant.helpers.dispatcher import async_dispatcher_connect
 from homeassistant.helpers.typing import StateType
 
 from .common import SourceEntity, create_source_entity, generate_sensor_entity_id
-from .const import (
-    DOMAIN,
-    SIGNAL_SENSOR_STATE_CHANGE,
-    STATE_PREDICTED_MAINTENANCE_DATE,
-)
+from .const import DOMAIN, SIGNAL_SENSOR_STATE_CHANGE, STATE_PREDICTED_MAINTENANCE_DATE
 from .device_binding import get_device_info
 from .logics import MaintenanceLogic
 
