@@ -3,6 +3,7 @@ import logging
 
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.core import HomeAssistant
+from homeassistant.exceptions import TemplateError
 from homeassistant.helpers import config_validation as cv
 from homeassistant.helpers.template import Template
 
@@ -44,7 +45,11 @@ async def get_maintenance_logic(
         is_on_template = Template(is_on_template_str, hass)
 
         async def render_is_on_template() -> bool:
-            return is_on_template.async_render()
+            try:
+                return is_on_template.async_render()
+            except TemplateError as e:
+                _LOGGER.error("Error rendering is on template: %s", e)
+                return False
 
         config_data[CONF_IS_ON_TEMPLATE] = render_is_on_template
 
