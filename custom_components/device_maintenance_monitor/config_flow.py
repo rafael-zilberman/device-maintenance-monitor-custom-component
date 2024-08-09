@@ -8,7 +8,7 @@ import voluptuous as vol
 from homeassistant import config_entries
 from homeassistant.config_entries import ConfigEntry, FlowResult, OptionsFlow
 from homeassistant.core import callback
-from homeassistant.helpers import selector
+from homeassistant.helpers import config_validation as cv, selector
 from homeassistant.helpers.entity import get_capability
 from homeassistant.helpers.typing import ConfigType
 
@@ -89,6 +89,15 @@ def _get_schema_by_sensor_type(sensor_type: SensorType) -> dict:
     raise NotImplementedError(f"Sensor type {sensor_type} is not implemented")
 
 
+def _validate_min_and_max_interval(user_input: dict) -> bool:
+    """Validate that the min interval is less than or equal to the max interval."""
+    min_interval = user_input.get(CONF_MIN_INTERVAL)
+    max_interval = user_input.get(CONF_MAX_INTERVAL)
+    if not min_interval or not max_interval:
+        return True
+    return cv.time_period_dict(min_interval) <= cv.time_period_dict(max_interval)
+
+
 class ConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
     """Handle a config flow for Device Maintenance Monitor."""
 
@@ -102,19 +111,22 @@ class ConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
         return OptionsFlowHandler(config_entry)
 
     async def async_step_user(
-        self,
-        user_input: dict[str, Any] | None = None,
+            self,
+            user_input: dict[str, Any] | None = None,
     ) -> FlowResult:
         """Handle the initial step."""
         return self.async_show_menu(step_id="user", menu_options=SENSOR_TYPE_MENU)
 
     async def async_step_runtime(
-        self,
-        user_input: dict[str, Any] | None = None,
+            self,
+            user_input: dict[str, Any] | None = None,
     ) -> FlowResult:
         """Handle the runtime logic configuration."""
         errors = {}  # TODO: validate user input
         if user_input is not None:
+            if not _validate_min_and_max_interval(user_input):
+                errors[CONF_MIN_INTERVAL] = "Minimum interval must be less than or equal to maximum interval"
+
             if not errors:
                 return await self.create_config_entry(SensorType.RUNTIME, user_input)
 
@@ -126,8 +138,8 @@ class ConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
         )
 
     async def async_step_count(
-        self,
-        user_input: dict[str, Any] | None = None,
+            self,
+            user_input: dict[str, Any] | None = None,
     ) -> FlowResult:
         """Handle the power on count logic configuration."""
         errors = {}  # TODO: validate user input
@@ -143,8 +155,8 @@ class ConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
         )
 
     async def async_step_fixed_interval(
-        self,
-        user_input: dict[str, Any] | None = None,
+            self,
+            user_input: dict[str, Any] | None = None,
     ) -> FlowResult:
         """Handle the fixed interval logic configuration."""
         errors = {}  # TODO: validate user input
@@ -168,9 +180,9 @@ class ConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
 
     @callback
     async def create_config_entry(
-        self,
-        selected_sensor_type: SensorType,
-        user_input: dict[str, Any] | None = None,
+            self,
+            selected_sensor_type: SensorType,
+            user_input: dict[str, Any] | None = None,
     ) -> FlowResult:
         """Create the config entry."""
         source_entity_id = user_input.get(CONF_ENTITY_ID)
@@ -215,8 +227,8 @@ class OptionsFlowHandler(OptionsFlow):
         self.source_entity: SourceEntity | None = None
 
     async def async_step_init(
-        self,
-        user_input: dict[str, Any] | None = None,
+            self,
+            user_input: dict[str, Any] | None = None,
     ) -> FlowResult:
         """Handle the initial step."""
         errors = {}
@@ -250,6 +262,12 @@ class OptionsFlowHandler(OptionsFlow):
         if CONF_ENTITY_ID in user_input:
             self.current_config[CONF_ENTITY_ID] = user_input[CONF_ENTITY_ID]
 
+        errors = {}
+        if not _validate_min_and_max_interval(user_input):
+            errors[CONF_MIN_INTERVAL] = "Minimum interval must be less than or equal to maximum interval"
+
+        if errors:
+            return errors
         self.hass.config_entries.async_update_entry(
             self.config_entry,
             data=self.current_config,
@@ -258,10 +276,10 @@ class OptionsFlowHandler(OptionsFlow):
         return {}
 
     def _process_user_input(
-        self,
-        user_input: dict[str, Any],
-        schema: vol.Schema,
-    ) -> None:
+            self,
+            user_input: dict[str, Any],
+            schema: vol.Schema,
+    ):
         """Process the provided user input against the schema.
 
         Update the current_config dictionary with the new options.
@@ -309,8 +327,8 @@ class OptionsFlowHandler(OptionsFlow):
 
 
 def _fill_schema_defaults(
-    data_schema: vol.Schema,
-    current_config: dict[str, str],
+        data_schema: vol.Schema,
+        current_config: dict[str, str],
 ) -> vol.Schema:
     """Make a copy of the schema with suggested values set to saved options."""
     schema = {}
@@ -318,9 +336,9 @@ def _fill_schema_defaults(
         new_key = key
         if key in current_config and isinstance(key, vol.Marker):
             if (
-                isinstance(key, vol.Optional)
-                and callable(key.default)
-                and key.default()
+                    isinstance(key, vol.Optional)
+                    and callable(key.default)
+                    and key.default()
             ):
                 new_key = vol.Optional(key.schema, default=current_config.get(key))
             else:

@@ -111,14 +111,22 @@ class RuntimeMaintenanceLogic(MaintenanceLogic):
             self._last_maintenance_date,
         )
         now = datetime.now()
+
+        # Check if the maximum interval is set and if the current date exceeds the maximum maintenance date
         if self._max_interval:
             max_maintenance_date = self._last_maintenance_date + self._max_interval
-            return now > max_maintenance_date
+            if now > max_maintenance_date:
+                return True
 
+        # Check if the minimum interval is set and if the runtime duration exceeds the minimum interval
         if self._min_interval and self._runtime_duration >= self._min_interval:
             min_maintenance_date = self._last_maintenance_date + self._min_interval
-            return now > min_maintenance_date and self._runtime_duration >= self._interval
+            # Check if the current date exceeds the minimum maintenance date
+            # and if the runtime duration exceeds the interval
+            if now > min_maintenance_date and self._runtime_duration >= self._interval:
+                return True
 
+        # Check if the runtime duration exceeds the interval
         return self._runtime_duration >= self._interval
 
     def _get_state(self) -> dict[str, str]:
