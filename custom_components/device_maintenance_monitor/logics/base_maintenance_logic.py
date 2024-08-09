@@ -9,7 +9,6 @@ from ..const import (
     DATE_FORMAT,
     STATE_LAST_MAINTENANCE_DATE,
     STATE_PREDICTED_MAINTENANCE_DATE,
-    SensorType,
 )
 
 _LOGGER = logging.getLogger(__name__)
@@ -19,8 +18,6 @@ IsOnExpression = Callable[[], Awaitable[bool]]
 
 class MaintenanceLogic(ABC):
     """An abstract base class that represents the logic for maintaining a device."""
-
-    sensor_type: SensorType  # The type of sensor used by the configuration
 
     _name: str  # The name of the entity
     _entity_id: str | None  # The unique identifier of the source entity
@@ -207,3 +204,8 @@ class MaintenanceLogic(ABC):
     def name(self) -> str:
         """Return the name of the entity."""
         return self._name
+
+    @final
+    @property
+    def logic_type(self) -> str:
+        return self.__class__.__name__

@@ -9,15 +9,12 @@ from ..const import (
     CONF_ON_STATES,
     DEFAULT_FIXED_INTERVAL_UPDATE_FREQUENCY,
     DEFAULT_ON_STATES,
-    SensorType,
 )
 from .base_maintenance_logic import IsOnExpression, MaintenanceLogic
 
 
 class FixedIntervalMaintenanceLogic(MaintenanceLogic):
     """A class that represents the logic for maintaining a device based on a fixed interval."""
-
-    sensor_type: SensorType = SensorType.FIXED_INTERVAL
 
     _interval: timedelta  # The interval for maintenance
 

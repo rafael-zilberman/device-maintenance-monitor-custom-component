@@ -11,7 +11,6 @@ from ..const import (
     DEFAULT_ON_STATES,
     DEFAULT_RUNTIME_UPDATE_FREQUENCY,
     STATE_RUNTIME_DURATION,
-    SensorType,
 )
 from .base_maintenance_logic import IsOnExpression, MaintenanceLogic
 
@@ -20,8 +19,6 @@ _LOGGER = logging.getLogger(__name__)
 
 class RuntimeMaintenanceLogic(MaintenanceLogic):
     """A class that represents the logic for maintaining a device based on the runtime."""
-
-    sensor_type: SensorType = SensorType.RUNTIME
 
     _interval: timedelta  # The interval for maintenance
 

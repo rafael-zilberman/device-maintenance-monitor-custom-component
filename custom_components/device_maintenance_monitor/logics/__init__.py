@@ -6,17 +6,17 @@ from homeassistant.core import HomeAssistant
 from homeassistant.helpers import config_validation as cv
 from homeassistant.helpers.template import Template
 
-from ..const import CONF_INTERVAL, CONF_IS_ON_TEMPLATE, CONF_SENSOR_TYPE
+from ..const import CONF_INTERVAL, CONF_IS_ON_TEMPLATE, CONF_SENSOR_TYPE, SensorType
 from .base_maintenance_logic import MaintenanceLogic
 from .count_maintenance_logic import CountMaintenanceLogic
 from .fixed_interval_maintenance_logic import FixedIntervalMaintenanceLogic
 from .runtime_maintenance_logic import RuntimeMaintenanceLogic
 
-IMPLEMENTED_LOGICS: list[type[MaintenanceLogic]] = [
-    RuntimeMaintenanceLogic,
-    CountMaintenanceLogic,
-    FixedIntervalMaintenanceLogic,
-]
+IMPLEMENTED_LOGICS: dict[SensorType, type[MaintenanceLogic]] = {
+    SensorType.RUNTIME: RuntimeMaintenanceLogic,
+    SensorType.COUNT: CountMaintenanceLogic,
+    SensorType.FIXED_INTERVAL: FixedIntervalMaintenanceLogic,
+}
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -48,8 +48,8 @@ async def get_maintenance_logic(
 
         config_data[CONF_IS_ON_TEMPLATE] = render_is_on_template
 
-    for logic in IMPLEMENTED_LOGICS:
-        if logic.sensor_type == sensor_type:
-            return logic.get_instance(config_data)
+    logic = IMPLEMENTED_LOGICS.get(sensor_type)
+    if not logic:
+        raise NotImplementedError(f"sensor_type {sensor_type} is not implemented")
 
-    raise NotImplementedError(f"sensor_type {sensor_type} is not implemented")
+    return logic.get_instance(config_data)

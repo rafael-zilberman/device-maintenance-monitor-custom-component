@@ -9,15 +9,12 @@ from ..const import (
     CONF_ON_STATES,
     DEFAULT_ON_STATES,
     STATE_DEVICE_TURN_ON_COUNT,
-    SensorType,
 )
 from .base_maintenance_logic import IsOnExpression, MaintenanceLogic
 
 
 class CountMaintenanceLogic(MaintenanceLogic):
     """A class that represents the logic for maintaining a device based on the turn on count."""
-
-    sensor_type: SensorType = SensorType.COUNT
 
     _count: int  # The count of maintenance
 
@@ -52,8 +49,8 @@ class CountMaintenanceLogic(MaintenanceLogic):
         :return: An instance of the maintenance logic.
         """
         return CountMaintenanceLogic(
-            count=config.get(CONF_COUNT),
             name=config.get(CONF_NAME),
+            count=config.get(CONF_COUNT),
             entity_id=config.get(CONF_ENTITY_ID),
             on_states=config.get(CONF_ON_STATES) or DEFAULT_ON_STATES,
             is_on_expression=config.get(CONF_IS_ON_TEMPLATE),

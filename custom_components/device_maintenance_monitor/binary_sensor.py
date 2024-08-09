@@ -41,10 +41,10 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry, async_add_e
         source_entity = await create_source_entity(logic.source_entity_id, hass)
     # TODO: Create logging helpers
     _LOGGER.info(
-        "Setting up binary sensor entity for entry '%s' of device '%s' using %s sensor type",
+        "Setting up binary sensor entity for entry '%s' of device '%s' using %s logic type",
         entry,
         logic.source_entity_id,
-        logic.sensor_type
+        logic.logic_type
     )
     async_add_entities([
         MaintenanceNeededBinarySensorEntity(hass, logic, entry.unique_id, source_entity),
@@ -87,10 +87,10 @@ class MaintenanceNeededBinarySensorEntity(BinarySensorEntity, RestoreEntity):
     async def async_added_to_hass(self) -> None:
         """Handle entity which will be added."""
         _LOGGER.info(
-            "Adding binary sensor entity '%s' for device '%s' using %s sensor type",
+            "Adding binary sensor entity '%s' for device '%s' using %s logic type",
             self.entity_id,
             self._logic.source_entity_id,
-            self._logic.sensor_type,
+            self._logic.logic_type,
         )
         restored_last_extra_data = await self.async_get_last_extra_data()
         if restored_last_extra_data is not None:
