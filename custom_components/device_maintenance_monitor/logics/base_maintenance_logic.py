@@ -208,4 +208,5 @@ class MaintenanceLogic(ABC):
     @final
     @property
     def logic_type(self) -> str:
+        """Return the type of the logic."""
         return self.__class__.__name__
