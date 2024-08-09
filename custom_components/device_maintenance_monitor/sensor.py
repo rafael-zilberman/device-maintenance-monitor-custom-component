@@ -1,28 +1,24 @@
 """The sensors for the Device Maintenance Monitor integration."""
+import logging
 from collections.abc import Callable
 from dataclasses import dataclass
 from datetime import datetime
-import logging
 
 from homeassistant.components.sensor import (
     SensorDeviceClass,
     SensorEntity,
     SensorEntityDescription,
-    SensorStateClass,
 )
 from homeassistant.config_entries import ConfigEntry
-from homeassistant.const import UnitOfTime
-from homeassistant.core import HomeAssistant, callback, split_entity_id
+from homeassistant.core import HomeAssistant, callback
 from homeassistant.helpers.dispatcher import async_dispatcher_connect
 from homeassistant.helpers.typing import StateType
 
+from .common import SourceEntity, create_source_entity, generate_sensor_entity_id
 from .const import (
     DOMAIN,
     SIGNAL_SENSOR_STATE_CHANGE,
-    STATE_DEVICE_TURN_ON_COUNT,
     STATE_PREDICTED_MAINTENANCE_DATE,
-    STATE_RUNTIME_DURATION,
-    SensorType,
 )
 from .device_binding import get_device_info
 from .logics import MaintenanceLogic
@@ -34,7 +30,6 @@ _LOGGER = logging.getLogger(__name__)
 class MaintenanceSensorEntityDescription(SensorEntityDescription):
     """Class describing sensors entities."""
 
-    sensor_types: list[SensorType]
     value_fn: Callable[[MaintenanceLogic], str | float | datetime]
 
 
@@ -43,7 +38,12 @@ class MaintenanceDurationSensorEntity(SensorEntity):
 
     entity_description: MaintenanceSensorEntityDescription
 
-    def __init__(self, logic: MaintenanceLogic, unique_id: str, description: MaintenanceSensorEntityDescription):
+    def __init__(self,
+                 hass: HomeAssistant,
+                 logic: MaintenanceLogic,
+                 unique_id: str,
+                 source_entity: SourceEntity | None,
+                 description: MaintenanceSensorEntityDescription):
         """Initialize the sensor entity.
 
         :param logic: The maintenance logic to be  used.
@@ -51,10 +51,17 @@ class MaintenanceDurationSensorEntity(SensorEntity):
         self.entity_description = description
         self._attr_unique_id = f"{unique_id}_{description.key}"
         self._attr_translation_key = f"{description.key}"
-        self._attr_device_info = get_device_info(logic.source_entity)
 
-        object_id = split_entity_id(logic.source_entity.entity_id)[1]
-        self.entity_id = f"sensor.{object_id}_{description.key}"
+        if source_entity:
+            self._attr_device_info = get_device_info(source_entity)
+        self.entity_id = generate_sensor_entity_id(
+            hass,
+            "sensor",
+            description.key,
+            source_entity,
+            logic.name,
+            self.unique_id,
+        )
 
         self._logic = logic
 
@@ -82,22 +89,7 @@ MAINTENANCE_SENSORS: list[MaintenanceSensorEntityDescription] = [
     MaintenanceSensorEntityDescription(
         key=STATE_PREDICTED_MAINTENANCE_DATE,
         device_class=SensorDeviceClass.DATE,
-        sensor_types=SensorType.all_types(),
         value_fn=lambda logic: logic.predicted_maintenance_date,
-    ),
-    MaintenanceSensorEntityDescription(
-        key=STATE_RUNTIME_DURATION,
-        device_class=SensorDeviceClass.DURATION,
-        native_unit_of_measurement=UnitOfTime.SECONDS,
-        state_class=SensorStateClass.TOTAL_INCREASING,
-        sensor_types=[SensorType.RUNTIME],
-        value_fn=lambda logic: logic.runtime_duration.total_seconds(),
-    ),
-    MaintenanceSensorEntityDescription(
-        key=STATE_DEVICE_TURN_ON_COUNT,
-        state_class=SensorStateClass.TOTAL_INCREASING,
-        sensor_types=[SensorType.COUNT],
-        value_fn=lambda logic: logic.device_turn_on_count,
     ),
 ]
 
@@ -106,7 +98,16 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry, async_add_e
     """Set up the sensor platform."""
 
     logic: MaintenanceLogic = hass.data[DOMAIN][entry.entry_id]
+    source_entity = None
+    if logic.source_entity_id:
+        source_entity = await create_source_entity(logic.source_entity_id, hass)
+    _LOGGER.info(
+        "Setting up sensor entities for entry '%s' of device '%s' using %s logic type",
+        entry,
+        logic.source_entity_id,
+        logic.logic_type
+    )
     async_add_entities([
-        MaintenanceDurationSensorEntity(logic, entry.unique_id, sensor_description)
-        for sensor_description in MAINTENANCE_SENSORS if logic.sensor_type in sensor_description.sensor_types
+        MaintenanceDurationSensorEntity(hass, logic, entry.unique_id, source_entity, sensor_description)
+        for sensor_description in MAINTENANCE_SENSORS
     ])
