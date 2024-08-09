@@ -22,6 +22,8 @@ DEFAULT_ON_STATES: Final = [
     HVACMode.HEAT,
 ]  # TODO: Based on the device type
 CONF_IS_ON_TEMPLATE: Final = "is_on_template"
+CONF_MIN_INTERVAL: Final = "min_interval"
+CONF_MAX_INTERVAL: Final = "max_interval"
 
 # Events
 SIGNAL_SENSOR_STATE_CHANGE: Final = "device_maintenance_monitor_sensor_state_change"

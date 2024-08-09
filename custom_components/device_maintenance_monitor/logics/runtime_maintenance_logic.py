@@ -6,6 +6,8 @@ from ..const import (
     CONF_ENTITY_ID,
     CONF_INTERVAL,
     CONF_IS_ON_TEMPLATE,
+    CONF_MAX_INTERVAL,
+    CONF_MIN_INTERVAL,
     CONF_NAME,
     CONF_ON_STATES,
     DEFAULT_ON_STATES,
@@ -21,10 +23,14 @@ class RuntimeMaintenanceLogic(MaintenanceLogic):
     """A class that represents the logic for maintaining a device based on the runtime."""
 
     _interval: timedelta  # The interval for maintenance
+    _min_interval: timedelta | None  # The minimum interval for maintenance
+    _max_interval: timedelta | None  # The maximum interval for maintenance
 
     def __init__(self, *,
                  name: str,
                  interval: timedelta,
+                 min_interval: timedelta | None,
+                 max_interval: timedelta | None,
                  entity_id: str | None,
                  on_states: list[str] | None,
                  is_on_expression: IsOnExpression | None):
@@ -32,6 +38,8 @@ class RuntimeMaintenanceLogic(MaintenanceLogic):
 
         :param name: The name of the entity.
         :param interval: The interval for maintenance.
+        :param min_interval: The minimum interval for maintenance.
+        :param max_interval: The maximum interval for maintenance.
         :param entity_id: The unique identifier of the source entity.
         :param on_states: The states in which the device is considered to be "on".
         :param is_on_expression: The expression to determine if the device is on.
@@ -43,6 +51,9 @@ class RuntimeMaintenanceLogic(MaintenanceLogic):
             is_on_expression=is_on_expression,
         )
         self._interval = interval
+        self._min_interval = min_interval
+        self._max_interval = max_interval
+
         self._last_device_on_time = None
         self._runtime_duration = timedelta(seconds=0)
 
@@ -56,6 +67,8 @@ class RuntimeMaintenanceLogic(MaintenanceLogic):
         return RuntimeMaintenanceLogic(
             name=config.get(CONF_NAME),
             interval=config.get(CONF_INTERVAL),
+            min_interval=config.get(CONF_MIN_INTERVAL),
+            max_interval=config.get(CONF_MAX_INTERVAL),
             entity_id=config.get(CONF_ENTITY_ID),
             on_states=config.get(CONF_ON_STATES) or DEFAULT_ON_STATES,
             is_on_expression=config.get(CONF_IS_ON_TEMPLATE),
@@ -87,6 +100,25 @@ class RuntimeMaintenanceLogic(MaintenanceLogic):
 
         :return: True if maintenance is needed, False otherwise.
         """
+        _LOGGER.info(
+            "Checking if maintenance is needed for device '%s', Runtime duration: %s, Min interval: %s, Max interval: "
+            "%s, Interval: %s, Last Maintenance Date: %s",
+            self._name,
+            self._runtime_duration,
+            self._min_interval,
+            self._max_interval,
+            self._interval,
+            self._last_maintenance_date,
+        )
+        now = datetime.now()
+        if self._max_interval:
+            max_maintenance_date = self._last_maintenance_date + self._max_interval
+            return now > max_maintenance_date
+
+        if self._min_interval and self._runtime_duration >= self._min_interval:
+            min_maintenance_date = self._last_maintenance_date + self._min_interval
+            return now > min_maintenance_date and self._runtime_duration >= self._interval
+
         return self._runtime_duration >= self._interval
 
     def _get_state(self) -> dict[str, str]:
@@ -124,19 +156,33 @@ class RuntimeMaintenanceLogic(MaintenanceLogic):
 
         # TODO: move to consts
         now = datetime.now()
-        days_since_last_maintenance = (
-                                              now - self._last_maintenance_date
-                                      ).total_seconds() / 86400
+        days_since_last_maintenance = (now - self._last_maintenance_date).total_seconds() / 86400
         if days_since_last_maintenance == 0:
             return None
+
         average_runtime_per_day = self._runtime_duration / days_since_last_maintenance
-        if average_runtime_per_day == timedelta(seconds=0):
+        if not average_runtime_per_day:
+            # Avoid division by zero
             return None
+
         runtime_left_until_maintenance = self._interval - self._runtime_duration
-        days_left_until_maintenance = (
-                runtime_left_until_maintenance / average_runtime_per_day
-        )
-        return now + timedelta(days=days_left_until_maintenance)
+
+        days_left_until_maintenance = runtime_left_until_maintenance / average_runtime_per_day
+
+        predicted_date = now + timedelta(days=days_left_until_maintenance)
+
+        # Ensure the predicted date falls within the min and max intervals
+        if self._min_interval:
+            min_maintenance_date = self._last_maintenance_date + self._min_interval
+            if predicted_date < min_maintenance_date:
+                return min_maintenance_date
+
+        if self._max_interval:
+            max_maintenance_date = self._last_maintenance_date + self._max_interval
+            if predicted_date > max_maintenance_date:
+                return max_maintenance_date
+
+        return predicted_date
 
     def update(self):
         """Update the runtime duration of the device."""

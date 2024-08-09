@@ -18,6 +18,8 @@ from .const import (
     CONF_ENTITY_ID,
     CONF_INTERVAL,
     CONF_IS_ON_TEMPLATE,
+    CONF_MAX_INTERVAL,
+    CONF_MIN_INTERVAL,
     CONF_NAME,
     CONF_ON_STATES,
     CONF_SENSOR_TYPE,
@@ -40,6 +42,16 @@ CONFIG_SCHEMA = {
 SCHEMA_RUNTIME = {
     vol.Required(CONF_ENTITY_ID): selector.EntitySelector(),
     vol.Required(CONF_INTERVAL): selector.DurationSelector(),
+    vol.Optional(CONF_MIN_INTERVAL): selector.DurationSelector(
+        selector.DurationSelectorConfig(
+            enable_day=True,
+        ),
+    ),
+    vol.Optional(CONF_MAX_INTERVAL): selector.DurationSelector(
+        selector.DurationSelectorConfig(
+            enable_day=True,
+        ),
+    ),
     vol.Optional(CONF_IS_ON_TEMPLATE): selector.TemplateSelector(),
 }
 
