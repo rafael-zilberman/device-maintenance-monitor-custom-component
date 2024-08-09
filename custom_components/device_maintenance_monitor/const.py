@@ -21,6 +21,9 @@ DEFAULT_ON_STATES: Final = [
     HVACMode.HEAT_COOL,
     HVACMode.HEAT,
 ]  # TODO: Based on the device type
+CONF_IS_ON_TEMPLATE: Final = "is_on_template"
+CONF_MIN_INTERVAL: Final = "min_interval"
+CONF_MAX_INTERVAL: Final = "max_interval"
 
 # Events
 SIGNAL_SENSOR_STATE_CHANGE: Final = "device_maintenance_monitor_sensor_state_change"
@@ -30,6 +33,9 @@ STATE_LAST_MAINTENANCE_DATE: Final = "last_maintenance_date"
 STATE_PREDICTED_MAINTENANCE_DATE: Final = "predicted_maintenance_date"
 STATE_DEVICE_TURN_ON_COUNT: Final = "device_turn_on_count"
 STATE_RUNTIME_DURATION: Final = "runtime_duration"
+
+# Services
+SERVICE_RESET_MAINTENANCE: Final = "reset_maintenance"
 
 # Entities
 ENTITY_BINARY_SENSOR_KEY: Final = "maintenance_needed"
