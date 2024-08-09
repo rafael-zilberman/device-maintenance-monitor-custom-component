@@ -123,13 +123,15 @@ class MaintenanceNeededBinarySensorEntity(BinarySensorEntity, RestoreEntity):
             async def source_entity_state_listener(event: Event) -> None:
                 old_state = event.data.get("old_state")
                 new_state = event.data.get("new_state")
-                _LOGGER.info(
-                    "Handling state change for binary sensor entity '%s' for device '%s', old state: %s, new state: %s",
-                    self.entity_id,
-                    self._logic.source_entity_id,
-                    old_state,
-                    new_state,
-                )
+                if old_state != new_state:
+                    _LOGGER.info(
+                        "Handling state change for binary sensor entity '%s' for device '%s', old state: %s, "
+                        "new state: %s",
+                        self.entity_id,
+                        self._logic.source_entity_id,
+                        old_state,
+                        new_state,
+                    )
 
                 if old_state is None or new_state is None:
                     return
