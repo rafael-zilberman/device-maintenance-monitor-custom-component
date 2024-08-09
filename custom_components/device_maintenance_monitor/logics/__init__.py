@@ -7,7 +7,14 @@ from homeassistant.exceptions import TemplateError
 from homeassistant.helpers import config_validation as cv
 from homeassistant.helpers.template import Template
 
-from ..const import CONF_INTERVAL, CONF_IS_ON_TEMPLATE, CONF_SENSOR_TYPE, SensorType
+from ..const import (
+    CONF_INTERVAL,
+    CONF_IS_ON_TEMPLATE,
+    CONF_MAX_INTERVAL,
+    CONF_MIN_INTERVAL,
+    CONF_SENSOR_TYPE,
+    SensorType,
+)
 from .base_maintenance_logic import MaintenanceLogic
 from .count_maintenance_logic import CountMaintenanceLogic
 from .fixed_interval_maintenance_logic import FixedIntervalMaintenanceLogic
@@ -38,7 +45,13 @@ async def get_maintenance_logic(
     config_data = dict(config_entry.data)
     interval = config_data.get(CONF_INTERVAL)
     if interval is not None:
-        config_data[CONF_INTERVAL] = cv.time_period_dict(config_data.get(CONF_INTERVAL))
+        config_data[CONF_INTERVAL] = cv.time_period_dict(interval)
+    min_interval = config_data.get(CONF_MIN_INTERVAL)
+    if min_interval is not None:
+        config_data[CONF_MIN_INTERVAL] = cv.time_period_dict(min_interval)
+    max_interval = config_data.get(CONF_MAX_INTERVAL)
+    if max_interval is not None:
+        config_data[CONF_MAX_INTERVAL] = cv.time_period_dict(max_interval)
 
     is_on_template_str: str | None = config_data.get(CONF_IS_ON_TEMPLATE)
     if is_on_template_str is not None:
