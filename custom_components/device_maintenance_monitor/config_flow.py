@@ -178,7 +178,7 @@ class ConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
             name = user_input.get(CONF_NAME)
             if not name:
                 return self.async_abort(reason="missing_name")
-            await self.async_set_unique_id(f"mm_{name}")
+            await self.async_set_unique_id(f"mm_{name.lower().replace(' ', '_')}")
         self._abort_if_unique_id_configured()
 
         entry_config.update(
@@ -241,6 +241,7 @@ class OptionsFlowHandler(OptionsFlow):
         self.hass.config_entries.async_update_entry(
             self.config_entry,
             data=self.current_config,
+            title=str(self.current_config.get(CONF_NAME)),
         )
         return {}
 
