@@ -38,7 +38,7 @@ def _parse__is_on_template(hass: HomeAssistant, is_on_template_str: str) -> IsOn
     """
     is_on_template = Template(is_on_template_str, hass)
     if not is_on_template.ensure_valid():
-        _LOGGER.error("Error parsing is on template: %s", e)
+        _LOGGER.error("Error parsing is on template: %s", is_on_template_str)
         return None
 
     async def render_is_on_template() -> bool:
