@@ -55,9 +55,33 @@ This ensures that each device gets the attention it needs based on how much it i
 
 ## Usage
 
+### Entities
+
+The Device Maintenance Monitor integration provides the following entities:
+
+- **Sensor Entities:**
+  - `sensor.<device_name>_predicted_maintenance_date`: Displays the predicted date for the next maintenance based on the device's usage.
+
+- **Button Entities:**
+  - `button.reset_maintenance`: Resets the maintenance data for the device.
+
+- **Binary Sensor Entities:**
+  - `binary_sensor.<device_name>_maintenance_needed`: Indicates whether the device needs maintenance based on the configured criteria.
+
+Replace `<device_name>` with the actual name of your device as configured in Home Assistant.
+
 ### Resetting the Maintenance Data
 
 After performing maintenance on the device, press the `button.reset_maintenance` to reset the maintenance data and start a new tracking period.
+
+Another option is to reset the maintenance data is using a service call. You can call the `device_maintenance_monitor.reset_maintenance` service with the following data:
+
+```yaml
+service: device_maintenance_monitor.reset_maintenance
+data: {}
+target:
+  entity_id: binary_sensor.my_device_maintenance_needed
+```
 
 ### Example Automation
 
@@ -90,13 +114,29 @@ cd device_maintenance_monitor_custom_component
 pip install -r requirements.txt
  ```
 
-Alternatively, you can use Docker Compose to set up a local development environment.   
+You can use Docker Compose to set up a Home Assistant development environment with the custom component.   
 First, ensure Docker and Docker Compose are installed on your machine.  
 Use the provided compose.yaml file to start the Home Assistant container with the custom component:  
 ```bash
 docker-compose -f compose.yaml up
 ```
 Home Assistant instance with the component installed will be accessible at http://localhost:8123. You can now develop and test the custom component within this environment.
+The custom component files are mounted to the Home Assistant container, so any changes you make to the files will be reflected in the Home Assistant instance after a restart.
+
+## Pull Requests
+If you submit a pull request, please follow these guidelines:
+
+1. **Fork the repository** and create your branch from `dev`.
+2. **Create a new branch** following the naming convention: `feature/<Feature requests issue id>-your-feature-name` or `bugfix/<Bug report issue id>-your-fix-name`.
+3. **Update documentation** to reflect any changes or additions (including README.md if necessary).
+4. **Ensure your code adheres to the project's coding standards**.
+   1. Run `black .` to format your code and make sure it passes the linting checks.
+   2. Make sure to add docstrings to your functions and classes.
+5. **Provide a clear description** of the changes and the problem they solve.
+6. **Reference any relevant issues** in your pull request description.
+7. **Be prepared to make revisions** based on feedback from maintainers.
+   1. Address PR agent AI comments before requesting a review from maintainers.
+8. **Squash your commits before merging**.
 
 ## License
 This project is licensed under the MIT License. See the LICENSE file for details.
