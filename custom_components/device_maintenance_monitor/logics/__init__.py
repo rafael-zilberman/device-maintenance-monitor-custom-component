@@ -29,7 +29,7 @@ IMPLEMENTED_LOGICS: dict[SensorType, type[MaintenanceLogic]] = {
 _LOGGER = logging.getLogger(__name__)
 
 
-def _parse__is_on_template(hass: HomeAssistant, is_on_template_str: str) -> IsOnExpression | None:
+def _parse_is_on_template(hass: HomeAssistant, is_on_template_str: str) -> IsOnExpression | None:
     """Parse a template string into an expression.
 
     :param hass: The Home Assistant instance.
@@ -80,7 +80,7 @@ async def get_maintenance_logic(
     # Parse the is_on_template string into an expression
     is_on_template_str: str | None = config_data.get(CONF_IS_ON_TEMPLATE)
     if is_on_template_str:
-        config_data[CONF_IS_ON_TEMPLATE] = _parse__is_on_template(hass, is_on_template_str)
+        config_data[CONF_IS_ON_TEMPLATE] = _parse_is_on_template(hass, is_on_template_str)
 
     # Get the logic class and create an instance
     logic = IMPLEMENTED_LOGICS.get(sensor_type)
