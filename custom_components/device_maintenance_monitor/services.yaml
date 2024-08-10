@@ -1,0 +1,7 @@
+reset_maintenance:
+  name: Reset Maintenance Monitor
+  description: Reset the maintenance monitor for a device
+  target:
+    entity:
+      integration: device_maintenance_monitor
+      domain: binary_sensor

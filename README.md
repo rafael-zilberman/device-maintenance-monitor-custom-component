@@ -80,6 +80,24 @@ alert:
 ## Contributions
 Contributions are welcome! If you have any ideas, feel free to open an issue or submit a pull request.
 
+### Development
+
+To set up a development environment, clone the repository and install the dependencies:
+    
+ ```bash
+git clone git@github.com:rafael-zilberman/device-maintenance-monitor-custom-component.git
+cd device_maintenance_monitor_custom_component
+pip install -r requirements.txt
+ ```
+
+Alternatively, you can use Docker Compose to set up a local development environment.   
+First, ensure Docker and Docker Compose are installed on your machine.  
+Use the provided compose.yaml file to start the Home Assistant container with the custom component:  
+```bash
+docker-compose -f compose.yaml up
+```
+Home Assistant instance with the component installed will be accessible at http://localhost:8123. You can now develop and test the custom component within this environment.
+
 ## License
 This project is licensed under the MIT License. See the LICENSE file for details.
 

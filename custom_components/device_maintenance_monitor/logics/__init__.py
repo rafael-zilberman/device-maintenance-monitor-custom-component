@@ -1,23 +1,58 @@
 """The logics module for device maintenance monitor."""
+import logging
+
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.core import HomeAssistant
+from homeassistant.exceptions import TemplateError
+from homeassistant.helpers import config_validation as cv
+from homeassistant.helpers.template import Template
 
-from ..common import create_source_entity
-from ..const import CONF_ENTITY_ID, CONF_SENSOR_TYPE
-from .base_maintenance_logic import MaintenanceLogic
+from ..const import (
+    CONF_INTERVAL,
+    CONF_IS_ON_TEMPLATE,
+    CONF_MAX_INTERVAL,
+    CONF_MIN_INTERVAL,
+    CONF_SENSOR_TYPE,
+    SensorType,
+)
+from .base_maintenance_logic import IsOnExpression, MaintenanceLogic
 from .count_maintenance_logic import CountMaintenanceLogic
 from .fixed_interval_maintenance_logic import FixedIntervalMaintenanceLogic
 from .runtime_maintenance_logic import RuntimeMaintenanceLogic
 
-IMPLEMENTED_LOGICS: list[type[MaintenanceLogic]] = [
-    RuntimeMaintenanceLogic,
-    CountMaintenanceLogic,
-    FixedIntervalMaintenanceLogic,
-]
+IMPLEMENTED_LOGICS: dict[SensorType, type[MaintenanceLogic]] = {
+    SensorType.RUNTIME: RuntimeMaintenanceLogic,
+    SensorType.COUNT: CountMaintenanceLogic,
+    SensorType.FIXED_INTERVAL: FixedIntervalMaintenanceLogic,
+}
+
+_LOGGER = logging.getLogger(__name__)
+
+
+def _parse_is_on_template(hass: HomeAssistant, is_on_template_str: str) -> IsOnExpression | None:
+    """Parse a template string into an expression.
+
+    :param hass: The Home Assistant instance.
+    :param is_on_template_str: The template string.
+    :return: The expression.
+    """
+    is_on_template = Template(is_on_template_str, hass)
+    if not is_on_template.ensure_valid():
+        _LOGGER.error("Error parsing is on template: %s", is_on_template_str)
+        return None
+
+    async def render_is_on_template() -> bool:
+        try:
+            return is_on_template.async_render()
+        except TemplateError as e:
+            _LOGGER.error("Error rendering is on template: %s", e)
+            return False
+
+    return render_is_on_template
 
 
 async def get_maintenance_logic(
-    hass: HomeAssistant, config_entry: ConfigEntry
+        hass: HomeAssistant, config_entry: ConfigEntry
 ) -> MaintenanceLogic:
     """Get the maintenance logic for the config entry.
 
@@ -29,24 +64,27 @@ async def get_maintenance_logic(
     if sensor_type is None:
         raise ValueError(f"{CONF_SENSOR_TYPE} is required in {config_entry.data}")
 
-    source_entity_id = config_entry.data.get(CONF_ENTITY_ID)
-    if source_entity_id is None:
-        raise ValueError(f"{CONF_ENTITY_ID} is required in {config_entry.data}")
+    config_data = dict(config_entry.data)
 
-    logic_type_by_sensor_type = {
-        logic.sensor_type: logic for logic in IMPLEMENTED_LOGICS
-    }
+    # Convert the interval from a time period string to a timedelta
+    interval = config_data.get(CONF_INTERVAL)
+    if interval is not None:
+        config_data[CONF_INTERVAL] = cv.time_period_dict(interval)
+    min_interval = config_data.get(CONF_MIN_INTERVAL)
+    if min_interval is not None:
+        config_data[CONF_MIN_INTERVAL] = cv.time_period_dict(min_interval)
+    max_interval = config_data.get(CONF_MAX_INTERVAL)
+    if max_interval is not None:
+        config_data[CONF_MAX_INTERVAL] = cv.time_period_dict(max_interval)
 
-    sensor_logic = logic_type_by_sensor_type.get(sensor_type)
-    if sensor_logic is None:
+    # Parse the is_on_template string into an expression
+    is_on_template_str: str | None = config_data.get(CONF_IS_ON_TEMPLATE)
+    if is_on_template_str:
+        config_data[CONF_IS_ON_TEMPLATE] = _parse_is_on_template(hass, is_on_template_str)
+
+    # Get the logic class and create an instance
+    logic = IMPLEMENTED_LOGICS.get(sensor_type)
+    if not logic:
         raise NotImplementedError(f"sensor_type {sensor_type} is not implemented")
 
-    source_entity = await create_source_entity(
-        source_entity_id,
-        hass,
-    )
-    config_data = dict(config_entry.data)
-    return sensor_logic(
-        config_data=config_data,
-        source_entity=source_entity,
-    )
+    return logic.get_instance(config_data)
