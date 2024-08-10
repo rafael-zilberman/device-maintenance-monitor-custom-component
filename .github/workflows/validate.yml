@@ -7,9 +7,11 @@ on:
   push:
     branches:
       - "master"
+      - "dev"
   pull_request:
     branches:
       - "master"
+      - "dev"
 
 jobs:
   hassfest: # https://developers.home-assistant.io/blog/2020/04/16/hassfest
