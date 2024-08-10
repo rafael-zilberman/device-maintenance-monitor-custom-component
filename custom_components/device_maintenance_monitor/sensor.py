@@ -85,7 +85,7 @@ MAINTENANCE_SENSORS: list[MaintenanceSensorEntityDescription] = [
     MaintenanceSensorEntityDescription(
         key=STATE_PREDICTED_MAINTENANCE_DATE,
         device_class=SensorDeviceClass.DATE,
-        value_fn=lambda logic: logic.predicted_maintenance_date,
+        value_fn=lambda logic: logic.predicted_maintenance_date.date(),
     ),
 ]
 
