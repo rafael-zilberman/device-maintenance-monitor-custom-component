@@ -101,6 +101,51 @@ alert:
       - mobile_app_your_device
 ```
 
+### Dashboard
+
+You can create a dashboard to monitor the maintenance status of your devices. Here is an example of a Lovelace card to display the maintenance status of a devices using the `auto-entities` card:
+
+```yaml
+type: custom:auto-entities
+filter:
+  include:
+    - integration: device_maintenance_monitor
+      domain: binary_sensor
+      options:
+        type: tile
+  exclude: []
+sort:
+  method: attribute
+  attribute: predicted_maintenance_date
+card:
+  type: vertical-stack
+  title: 'Devices'
+card_param: cards
+```
+
+You can also use the custom card `device-maintenance-monitor-card` to display the maintenance status of your devices. You can find the card template [here](lovelace/card_device_maintenance.yaml).
+
+```yaml
+type: custom:auto-entities
+filter:
+  include:
+    - integration: device_maintenance_monitor
+      domain: binary_sensor
+      options:
+        type: 'custom:button-card'
+        template: card_device_maintenance
+        variables:
+          ulm_card_card_device_maintenance_force_background_color: true
+  exclude: []
+sort:
+  method: attribute
+  attribute: predicted_maintenance_date
+card:
+  type: vertical-stack
+  title: 'Devices'
+card_param: cards
+```
+
 ## Contributions
 Contributions are welcome! If you have any ideas, feel free to open an issue or submit a pull request.
 
