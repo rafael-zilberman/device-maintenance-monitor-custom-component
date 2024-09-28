@@ -8,9 +8,10 @@ from ..const import (
     CONF_NAME,
     CONF_ON_STATES,
     DEFAULT_FIXED_INTERVAL_UPDATE_FREQUENCY,
-    DEFAULT_ON_STATES,
+    DEFAULT_ON_STATES, CONF_MAINTENANCE_NEEDED_TEMPLATE, CONF_PREDICTED_MAINTENANCE_DATE_TEMPLATE,
 )
-from .base_maintenance_logic import IsOnExpression, MaintenanceLogic
+from .base_maintenance_logic import IsOnExpression, MaintenanceLogic, IsMaintenanceNeededExpression, \
+    PredictedMaintenanceDateExpression
 
 
 class FixedIntervalMaintenanceLogic(MaintenanceLogic):
@@ -23,7 +24,9 @@ class FixedIntervalMaintenanceLogic(MaintenanceLogic):
                  interval: timedelta,
                  entity_id: str | None,
                  on_states: list[str] | None,
-                 is_on_expression: IsOnExpression | None):
+                 is_on_expression: IsOnExpression | None,
+                 is_maintenance_needed_expression: IsMaintenanceNeededExpression | None,
+                 predicted_maintenance_date_expression: PredictedMaintenanceDateExpression | None):
         """Initialize a new instance of the MaintenanceLogic class.
 
         :param name: The name of the entity.
@@ -31,12 +34,16 @@ class FixedIntervalMaintenanceLogic(MaintenanceLogic):
         :param entity_id: The unique identifier of the source entity.
         :param on_states: The states in which the device is considered to be "on".
         :param is_on_expression: The expression to determine if the device is on.
+        :param is_maintenance_needed_expression: The expression to determine if maintenance is needed.
+        :param predicted_maintenance_date_expression: The expression to determine the predicted maintenance date.
         """
         super().__init__(
             entity_id=entity_id,
             name=name,
             on_states=on_states,
             is_on_expression=is_on_expression,
+            is_maintenance_needed_expression=is_maintenance_needed_expression,
+            predicted_maintenance_date_expression=predicted_maintenance_date_expression,
         )
         self._interval = interval
 
@@ -53,10 +60,12 @@ class FixedIntervalMaintenanceLogic(MaintenanceLogic):
             entity_id=config.get(CONF_ENTITY_ID),
             on_states=config.get(CONF_ON_STATES) or DEFAULT_ON_STATES,
             is_on_expression=config.get(CONF_IS_ON_TEMPLATE),
+            is_maintenance_needed_expression=config.get(CONF_MAINTENANCE_NEEDED_TEMPLATE),
+            predicted_maintenance_date_expression=config.get(CONF_PREDICTED_MAINTENANCE_DATE_TEMPLATE),
         )
 
     @property
-    def is_maintenance_needed(self) -> bool:
+    def _is_maintenance_needed(self) -> bool:
         """Indicate whether maintenance is needed based on the fixed interval.
 
         :return: True if maintenance is needed, False otherwise.
@@ -74,7 +83,7 @@ class FixedIntervalMaintenanceLogic(MaintenanceLogic):
         return DEFAULT_FIXED_INTERVAL_UPDATE_FREQUENCY
 
     @property
-    def predicted_maintenance_date(self) -> datetime | None:
+    def _predicted_maintenance_date(self) -> datetime | None:
         """Return the predicted maintenance date based on the fixed interval.
 
         :return: The predicted maintenance date.

@@ -41,14 +41,20 @@
           "name": "Name",
           "interval": "Interval",
           "min_interval": "Minimum Interval",
-          "max_interval": "Maximum Interval"
+          "max_interval": "Maximum Interval",
+          "is_on_template": "Is on template",
+          "maintenance_needed_template": "Maintenance needed template",
+          "predicted_maintenance_date_template": "Predicted maintenance date template"
         },
         "data_description": {
           "entity_id": "Entity the maintenance monitor is tracking, the maintenance monitor will listen to state changes of this entity to be updated",
           "name": "Leaving blank will take the name from the source entity",
           "interval": "The amount of time the device has been powered on between each maintenance",
           "min_interval": "The minimum amount of time between each maintenance",
-          "max_interval": "The maximum amount of time between each maintenance"
+          "max_interval": "The maximum amount of time between each maintenance",
+          "is_on_template": "Template to determine if the source entity is on",
+          "maintenance_needed_template": "Template to determine if maintenance is needed",
+          "predicted_maintenance_date_template": "Template to determine the predicted maintenance date"
         },
         "title": "Create a runtime maintenance monitor"
       },
@@ -56,12 +62,18 @@
         "data": {
           "entity_id": "Source entity",
           "name": "Name",
-          "count": "Count"
+          "count": "Count",
+          "is_on_template": "Is on template",
+          "maintenance_needed_template": "Maintenance needed template",
+          "predicted_maintenance_date_template": "Predicted maintenance date template"
         },
         "data_description": {
           "entity_id": "Entity the maintenance monitor is tracking, the maintenance monitor will listen to state changes of this entity to be updated",
           "name": "Leaving blank will take the name from the source entity",
-          "count": "The amount of actions on counts between each maintenance"
+          "count": "The amount of actions on counts between each maintenance",
+          "is_on_template": "Template to determine if the source entity is on",
+          "maintenance_needed_template": "Template to determine if maintenance is needed",
+          "predicted_maintenance_date_template": "Template to determine the predicted maintenance date"
         },
         "title": "Create a power on count maintenance monitor"
       },
@@ -69,12 +81,18 @@
         "data": {
           "entity_id": "Source entity",
           "name": "Name",
-          "interval": "Interval"
+          "interval": "Interval",
+          "is_on_template": "Is on template",
+          "maintenance_needed_template": "Maintenance needed template",
+          "predicted_maintenance_date_template": "Predicted maintenance date template"
         },
         "data_description": {
           "entity_id": "Entity the maintenance monitor is tracking, the maintenance monitor will listen to state changes of this entity to be updated",
           "name": "Leaving blank will take the name from the source entity",
-          "interval": "The amount of time between each maintenance"
+          "interval": "The amount of time between each maintenance",
+          "is_on_template": "Template to determine if the source entity is on",
+          "maintenance_needed_template": "Template to determine if maintenance is needed",
+          "predicted_maintenance_date_template": "Template to determine the predicted maintenance date"
         },
         "title": "Create a fixed interval maintenance monitor"
       }
@@ -92,7 +110,10 @@
           "min_interval": "Minimum Interval",
           "max_interval": "Maximum Interval",
           "count": "Count",
-          "on_states": "On states"
+          "on_states": "On states",
+          "is_on_template": "Is on template",
+          "maintenance_needed_template": "Maintenance needed template",
+          "predicted_maintenance_date_template": "Predicted maintenance date template"
         },
         "data_description": {
           "name": "Leaving blank will take the name from the source entity",
@@ -100,7 +121,10 @@
           "min_interval": "The minimum amount of time between each maintenance",
           "max_interval": "The maximum amount of time between each maintenance",
           "count": "The amount of actions on counts between each maintenance",
-          "on_states": "The states that are considered as on, when the source entity is in one of these states the maintenance monitor will start counting"
+          "on_states": "The states that are considered as on, when the source entity is in one of these states the maintenance monitor will start counting",
+          "is_on_template": "Template to determine if the source entity is on",
+          "maintenance_needed_template": "Template to determine if maintenance is needed",
+          "predicted_maintenance_date_template": "Template to determine the predicted maintenance date"
         }
       }
     }

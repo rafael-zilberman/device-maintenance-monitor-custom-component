@@ -78,7 +78,7 @@ class ResetMaintenanceButtonEntity(ButtonEntity):
     async def async_press(self) -> None:
         """Handle the press of the button."""
         # Reset the device maintenance monitor metrics
-        self._logic.reset()
+        await self._logic.reset()
         self.async_write_ha_state()
 
         # Notify all sensors to update its state
