@@ -22,6 +22,8 @@ DEFAULT_ON_STATES: Final = [
     HVACMode.HEAT,
 ]  # TODO: Based on the device type
 CONF_IS_ON_TEMPLATE: Final = "is_on_template"
+CONF_MAINTENANCE_NEEDED_TEMPLATE: Final = "maintenance_needed_template"
+CONF_PREDICTED_MAINTENANCE_DATE_TEMPLATE: Final = "predicted_maintenance_date_template"
 CONF_MIN_INTERVAL: Final = "min_interval"
 CONF_MAX_INTERVAL: Final = "max_interval"
 

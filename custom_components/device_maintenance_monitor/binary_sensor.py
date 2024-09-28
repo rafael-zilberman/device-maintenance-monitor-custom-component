@@ -197,8 +197,7 @@ class MaintenanceNeededBinarySensorEntity(BinarySensorEntity, RestoreEntity):
         )
 
         if self._logic.update_frequency:
-            @callback
-            def async_update(__: datetime | None = None) -> None:
+            async def async_update(__: datetime | None = None) -> None:
                 """Update the entity."""
                 _LOGGER.info(
                     "Updating binary sensor entity '%s' for device '%s' based on the update frequency (%s)",
@@ -206,7 +205,7 @@ class MaintenanceNeededBinarySensorEntity(BinarySensorEntity, RestoreEntity):
                     self._logic.source_entity_id,
                     str(self._logic.update_frequency),
                 )
-                self._logic.update()
+                await self._logic.update()
                 self.async_schedule_update_ha_state(True)
 
             self.async_on_remove(
@@ -223,7 +222,7 @@ class MaintenanceNeededBinarySensorEntity(BinarySensorEntity, RestoreEntity):
             self._logic.source_entity_id,
             self.extra_restore_state_data.as_dict(),
         )
-        self._logic.update()
+        await self._logic.update()
         self.async_write_ha_state()
 
         # Notify all sensors to update its state
@@ -244,8 +243,7 @@ class MaintenanceNeededBinarySensorEntity(BinarySensorEntity, RestoreEntity):
         """Return the state attributes."""
         return RestoredExtraData(self._logic.get_state())
 
-    @callback
-    def async_reset(self):
+    async def async_reset(self):
         """Handle the reset of the binary sensor."""
         _LOGGER.info(
             "Resetting entity '%s' for device '%s'",
@@ -254,7 +252,7 @@ class MaintenanceNeededBinarySensorEntity(BinarySensorEntity, RestoreEntity):
         )
 
         # Reset the device maintenance monitor metrics
-        self._logic.reset()
+        await self._logic.reset()
         self.async_write_ha_state()
 
         # Notify all sensors to update its state

@@ -3,7 +3,7 @@ from abc import ABC, abstractmethod
 from collections.abc import Awaitable, Callable
 from datetime import datetime, timedelta
 import logging
-from typing import final
+from typing import Protocol, final
 
 from ..const import (
     DATE_FORMAT,
@@ -16,6 +16,36 @@ _LOGGER = logging.getLogger(__name__)
 IsOnExpression = Callable[[], Awaitable[bool]]
 
 
+class IsMaintenanceNeededExpression(Protocol):
+    """An expression to determine if maintenance is needed."""
+
+    def __call__(self,
+                 is_maintenance_needed: bool,
+                 last_maintenance_date: datetime) -> Awaitable[bool]:
+        """Determine if maintenance is needed.
+
+        :param is_maintenance_needed: Whether maintenance is needed.
+        :param last_maintenance_date: The date of the last maintenance.
+        :return: True if maintenance is needed; otherwise, False.
+        """
+        ...
+
+
+class PredictedMaintenanceDateExpression(Protocol):
+    """An expression to determine the predicted maintenance date."""
+
+    def __call__(self,
+                 predicted_maintenance_date: datetime | None,
+                 last_maintenance_date: datetime) -> Awaitable[datetime]:
+        """Determine the predicted maintenance date.
+
+        :param predicted_maintenance_date: The date of the last maintenance.
+        :param last_maintenance_date: The date of the last maintenance.
+        :return: The predicted maintenance date.
+        """
+        ...
+
+
 class MaintenanceLogic(ABC):
     """An abstract base class that represents the logic for maintaining a device."""
 
@@ -23,26 +53,36 @@ class MaintenanceLogic(ABC):
     _entity_id: str | None  # The unique identifier of the source entity
     _on_states: list[str] | None  # The states in which the device is considered to be "on"
     _is_on_expression: IsOnExpression | None  # The expression to determine if the device is on
+    _is_maintenance_needed_expression: IsMaintenanceNeededExpression | None  # The expression to determine if maintenance is needed
+    _predicted_maintenance_date_expression: PredictedMaintenanceDateExpression | None  # The expression to determine the predicted maintenance date
 
     def __init__(self, *,
                  name: str,
                  entity_id: str | None,
                  on_states: list[str] | None,
-                 is_on_expression: IsOnExpression | None):
+                 is_on_expression: IsOnExpression | None,
+                 is_maintenance_needed_expression: IsMaintenanceNeededExpression | None,
+                 predicted_maintenance_date_expression: PredictedMaintenanceDateExpression | None):
         """Initialize a new instance of the MaintenanceLogic class.
 
         :param name: The name of the entity.
         :param entity_id: The unique identifier of the source entity.
         :param on_states: The states in which the device is considered to be "on".
         :param is_on_expression: The expression to determine if the device is on.
+        :param is_maintenance_needed_expression: The expression to determine if maintenance is needed.
+        :param predicted_maintenance_date_expression: The expression to determine the predicted maintenance date.
         """
         self._name = name
         self._entity_id = entity_id
         self._on_states = on_states
         self._is_on_expression = is_on_expression
+        self._is_maintenance_needed_expression = is_maintenance_needed_expression
+        self._predicted_maintenance_date_expression = predicted_maintenance_date_expression
 
         self._last_maintenance_date = datetime.now()  # The date of the last maintenance
         self._last_state_on = False  # The state of the device during the last update
+        self._inner_is_maintenance_needed = False  # The inner value of whether maintenance is needed
+        self._inner_predicted_maintenance_date = None  # The inner value of the predicted maintenance date
 
     @classmethod
     def get_instance(cls, config: dict) -> "MaintenanceLogic":
@@ -59,11 +99,15 @@ class MaintenanceLogic(ABC):
         return self._entity_id
 
     @final
-    def reset(self):
+    async def reset(self):
         """Reset the last maintenance date to the current date."""
         self._last_maintenance_date = datetime.now()  # TODO: move defaults to consts
 
         self._reset()
+
+        # Update the maintenance status
+        self._inner_is_maintenance_needed = await self._get_is_maintenance_needed()
+        self._inner_predicted_maintenance_date = await self._get_predicted_maintenance_date()
 
     def _reset(self):
         """Provide additional reset logic."""
@@ -96,14 +140,7 @@ class MaintenanceLogic(ABC):
             # The state hasn't changed
             return
 
-        if is_new_state_on:
-            # The device has turned on.
-            self._handle_turn_on()
-            self._last_state_on = True
-        else:
-            # The device has turned off.
-            self._handle_turn_off()
-            self._last_state_on = False
+        await self._handle_device_state(is_new_state_on)
 
     @final
     async def handle_startup(self, current_state: str):
@@ -112,7 +149,14 @@ class MaintenanceLogic(ABC):
         :param current_state: The current state of the device.
         """
         is_current_state_on = await self._is_device_on(current_state)
-        if is_current_state_on:
+        await self._handle_device_state(is_current_state_on)
+
+    async def _handle_device_state(self, state: bool):
+        """Handle the state of the device.
+
+        :param state: The state of the device.
+        """
+        if state:
             # The device is on.
             self._handle_turn_on()
             self._last_state_on = True
@@ -121,15 +165,49 @@ class MaintenanceLogic(ABC):
             self._handle_turn_off()
             self._last_state_on = False
 
+        # Update the maintenance status
+        self._inner_is_maintenance_needed = await self._get_is_maintenance_needed()
+        self._inner_predicted_maintenance_date = await self._get_predicted_maintenance_date()
+
     def _handle_turn_on(self):
         """Provide additional logic when the device turns on."""
 
     def _handle_turn_off(self):
         """Provide additional logic when the device turns off."""
 
+    async def _get_is_maintenance_needed(self) -> bool:
+        """Indicate whether maintenance is needed.
+
+        :return: True if maintenance is needed; otherwise, False.
+        """
+        inner_is_maintenance_needed = self._is_maintenance_needed
+        _LOGGER.info(
+            "Checking if maintenance is needed for device '%s': %s",
+            self._name,
+            inner_is_maintenance_needed,
+        )
+        if not self._is_maintenance_needed_expression:
+            return inner_is_maintenance_needed
+        expression_result = await self._is_maintenance_needed_expression(
+            is_maintenance_needed=inner_is_maintenance_needed,
+            last_maintenance_date=self._last_maintenance_date,
+        )
+        if expression_result is not None:
+            return expression_result
+        return inner_is_maintenance_needed
+
+    @property
+    def is_maintenance_needed(self) -> bool:
+        """Indicate whether maintenance is needed.
+
+        :return: True if maintenance is needed; otherwise, False.
+        """
+        # This property is updated when the source entity changes state. This used to support async operations.
+        return self._inner_is_maintenance_needed
+
     @property
     @abstractmethod
-    def is_maintenance_needed(self) -> bool:
+    def _is_maintenance_needed(self) -> bool:
         """Indicate whether maintenance is needed.
 
         :return: True if maintenance is needed; otherwise, False.
@@ -188,15 +266,47 @@ class MaintenanceLogic(ABC):
         """
         return
 
+    async def _get_predicted_maintenance_date(self) -> datetime | None:
+        """Return the predicted date of the next maintenance.
+
+        :return: The predicted date of the next maintenance.
+        """
+        inner_predicted_maintenance_date = self._predicted_maintenance_date
+        if not self._predicted_maintenance_date_expression:
+            return inner_predicted_maintenance_date
+        expression_result = await self._predicted_maintenance_date_expression(
+            predicted_maintenance_date=inner_predicted_maintenance_date,
+            last_maintenance_date=self._last_maintenance_date,
+        )
+        if expression_result is not None:
+            return expression_result
+        return inner_predicted_maintenance_date
+
     @property
     def predicted_maintenance_date(self) -> datetime | None:
         """Return the predicted date of the next maintenance.
 
         :return: The predicted date of the next maintenance.
         """
+        # This property is updated when the source entity changes state. This used to support async operations.
+        return self._inner_predicted_maintenance_date
+
+    @property
+    def _predicted_maintenance_date(self) -> datetime | None:
+        """Return the predicted date of the next maintenance.
+
+        :return: The predicted date of the next maintenance.
+        """
         return None
 
-    def update(self):
+    async def update(self):
+        """Provide additional update logic."""
+        self._update()
+
+        # Update the maintenance status
+        self._inner_predicted_maintenance_date = await self._get_predicted_maintenance_date()
+
+    def _update(self):
         """Provide additional update logic."""
 
     @final

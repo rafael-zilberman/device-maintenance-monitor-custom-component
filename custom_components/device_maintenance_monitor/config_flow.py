@@ -18,6 +18,8 @@ from .const import (
     CONF_ENTITY_ID,
     CONF_INTERVAL,
     CONF_IS_ON_TEMPLATE,
+    CONF_MAINTENANCE_NEEDED_TEMPLATE,
+    CONF_PREDICTED_MAINTENANCE_DATE_TEMPLATE,
     CONF_MAX_INTERVAL,
     CONF_MIN_INTERVAL,
     CONF_NAME,
@@ -53,6 +55,8 @@ SCHEMA_RUNTIME = {
         ),
     ),
     vol.Optional(CONF_IS_ON_TEMPLATE): selector.TemplateSelector(),
+    vol.Optional(CONF_MAINTENANCE_NEEDED_TEMPLATE): selector.TemplateSelector(),
+    vol.Optional(CONF_PREDICTED_MAINTENANCE_DATE_TEMPLATE): selector.TemplateSelector(),
 }
 
 SCHEMA_COUNT = {
@@ -64,6 +68,8 @@ SCHEMA_COUNT = {
         ),
     ),
     vol.Optional(CONF_IS_ON_TEMPLATE): selector.TemplateSelector(),
+    vol.Optional(CONF_MAINTENANCE_NEEDED_TEMPLATE): selector.TemplateSelector(),
+    vol.Optional(CONF_PREDICTED_MAINTENANCE_DATE_TEMPLATE): selector.TemplateSelector(),
 }
 
 SCHEMA_FIXED_INTERVAL = {
