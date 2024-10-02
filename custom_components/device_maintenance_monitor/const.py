@@ -24,6 +24,7 @@ DEFAULT_ON_STATES: Final = [
 CONF_IS_ON_TEMPLATE: Final = "is_on_template"
 CONF_MIN_INTERVAL: Final = "min_interval"
 CONF_MAX_INTERVAL: Final = "max_interval"
+CONFIG_INITIAL_LAST_MAINTENANCE_DATE: Final = "initial_last_maintenance_date"
 
 # Events
 SIGNAL_SENSOR_STATE_CHANGE: Final = "device_maintenance_monitor_sensor_state_change"

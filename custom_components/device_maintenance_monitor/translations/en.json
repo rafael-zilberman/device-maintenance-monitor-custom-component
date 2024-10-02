@@ -42,7 +42,8 @@
           "interval": "Interval",
           "min_interval": "Minimum Interval",
           "max_interval": "Maximum Interval",
-          "is_on_template": "Is on template"
+          "is_on_template": "Is on template",
+          "initial_last_maintenance_date": "Last maintenance date"
         },
         "data_description": {
           "entity_id": "Entity the maintenance monitor is tracking, the maintenance monitor will listen to state changes of this entity to be updated",
@@ -50,7 +51,8 @@
           "interval": "The amount of time the device has been powered on between each maintenance",
           "min_interval": "The minimum amount of time between each maintenance",
           "max_interval": "The maximum amount of time between each maintenance",
-          "is_on_template": "Template to determine if the device is on"
+          "is_on_template": "Template to determine if the device is on",
+            "initial_last_maintenance_date": "The date the device was last maintained"
         },
         "title": "Create a runtime maintenance monitor"
       },
@@ -61,7 +63,8 @@
           "count": "Count",
           "min_interval": "Minimum Interval",
           "max_interval": "Maximum Interval",
-          "is_on_template": "Is on template"
+          "is_on_template": "Is on template",
+          "initial_last_maintenance_date": "Last maintenance date"
         },
         "data_description": {
           "entity_id": "Entity the maintenance monitor is tracking, the maintenance monitor will listen to state changes of this entity to be updated",
@@ -69,7 +72,8 @@
           "count": "The amount of actions on counts between each maintenance",
           "min_interval": "The minimum amount of time between each maintenance",
           "max_interval": "The maximum amount of time between each maintenance",
-          "is_on_template": "Template to determine if the device is on"
+          "is_on_template": "Template to determine if the device is on",
+            "initial_last_maintenance_date": "The date the device was last maintained"
         },
         "title": "Create a power on count maintenance monitor"
       },
@@ -77,12 +81,14 @@
         "data": {
           "entity_id": "Source entity",
           "name": "Name",
-          "interval": "Interval"
+          "interval": "Interval",
+          "initial_last_maintenance_date": "Last maintenance date"
         },
         "data_description": {
           "entity_id": "Entity the maintenance monitor is tracking, the maintenance monitor will listen to state changes of this entity to be updated",
           "name": "Leaving blank will take the name from the source entity",
-          "interval": "The amount of time between each maintenance"
+          "interval": "The amount of time between each maintenance",
+          "initial_last_maintenance_date": "The date the device was last maintained"
         },
         "title": "Create a fixed interval maintenance monitor"
       }

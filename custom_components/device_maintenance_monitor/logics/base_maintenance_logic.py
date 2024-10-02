@@ -28,21 +28,26 @@ class MaintenanceLogic(ABC):
     def __init__(self, *,
                  name: str,
                  entity_id: str | None,
-                 on_states: list[str] | None,
-                 is_on_expression: IsOnExpression | None):
+                 on_states: list[str] | None = None,
+                 is_on_expression: IsOnExpression | None = None,
+                 initial_last_maintenance_date: datetime | None = None):
         """Initialize a new instance of the MaintenanceLogic class.
 
         :param name: The name of the entity.
         :param entity_id: The unique identifier of the source entity.
         :param on_states: The states in which the device is considered to be "on".
         :param is_on_expression: The expression to determine if the device is on.
+        :param initial_last_maintenance_date: The initial last maintenance date.
         """
         self._name = name
         self._entity_id = entity_id
         self._on_states = on_states
         self._is_on_expression = is_on_expression
 
-        self._last_maintenance_date = datetime.now()  # The date of the last maintenance
+        if initial_last_maintenance_date:
+            self._last_maintenance_date = initial_last_maintenance_date  # The date of the last maintenance
+        else:
+            self._last_maintenance_date = datetime.now()  # The date of the last maintenance
         self._last_reset_date = datetime.now()  # The date of the last reset
         self._last_state_on = False  # The state of the device during the last update
 

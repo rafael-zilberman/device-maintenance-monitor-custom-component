@@ -11,7 +11,7 @@ from ..const import (
     CONF_NAME,
     CONF_ON_STATES,
     DEFAULT_ON_STATES,
-    STATE_DEVICE_TURN_ON_COUNT,
+    STATE_DEVICE_TURN_ON_COUNT, CONFIG_INITIAL_LAST_MAINTENANCE_DATE, DATE_FORMAT,
 )
 from .base_maintenance_logic import IsOnExpression, MaintenanceLogic
 
@@ -30,7 +30,8 @@ class CountMaintenanceLogic(MaintenanceLogic):
                  max_interval: timedelta | None,
                  entity_id: str | None,
                  on_states: list[str] | None,
-                 is_on_expression: IsOnExpression | None):
+                 is_on_expression: IsOnExpression | None,
+                 initial_last_maintenance_date: datetime | None = None):
         """Initialize a new instance of the MaintenanceLogic class.
 
         :param name: The name of the entity.
@@ -40,12 +41,14 @@ class CountMaintenanceLogic(MaintenanceLogic):
         :param entity_id: The unique identifier of the source entity.
         :param on_states: The states in which the device is considered to be "on".
         :param is_on_expression: The expression to determine if the device is on.
+        :param initial_last_maintenance_date: The initial last maintenance date.
         """
         super().__init__(
             name=name,
             entity_id=entity_id,
             on_states=on_states,
             is_on_expression=is_on_expression,
+            initial_last_maintenance_date=initial_last_maintenance_date,
         )
         self._count = count
         self._min_interval = min_interval
@@ -68,6 +71,7 @@ class CountMaintenanceLogic(MaintenanceLogic):
             entity_id=config.get(CONF_ENTITY_ID),
             on_states=config.get(CONF_ON_STATES) or DEFAULT_ON_STATES,
             is_on_expression=config.get(CONF_IS_ON_TEMPLATE),
+            initial_last_maintenance_date=config.get(CONFIG_INITIAL_LAST_MAINTENANCE_DATE),
         )
 
     def _reset(self):

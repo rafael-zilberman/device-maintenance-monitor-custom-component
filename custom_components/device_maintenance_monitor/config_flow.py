@@ -23,6 +23,7 @@ from .const import (
     CONF_NAME,
     CONF_ON_STATES,
     CONF_SENSOR_TYPE,
+    CONFIG_INITIAL_LAST_MAINTENANCE_DATE,
     DOMAIN,
     SensorType,
 )
@@ -36,6 +37,11 @@ SENSOR_TYPE_MENU = {
 }
 
 CONFIG_SCHEMA = {
+    vol.Optional(CONF_NAME): selector.TextSelector(),
+    vol.Optional(CONFIG_INITIAL_LAST_MAINTENANCE_DATE): selector.DateSelector(),
+}
+
+OPTIONS_SCHEMA = {
     vol.Optional(CONF_NAME): selector.TextSelector(),
 }
 
@@ -252,9 +258,9 @@ class OptionsFlowHandler(OptionsFlow):
         )
 
     async def save_options(
-        self,
-        user_input: dict[str, Any],
-        schema: vol.Schema,
+            self,
+            user_input: dict[str, Any],
+            schema: vol.Schema,
     ) -> dict:
         """Save options, and return errors when validation fails."""
         self._process_user_input(user_input, schema)
@@ -295,7 +301,7 @@ class OptionsFlowHandler(OptionsFlow):
 
     def _build_options_schema(self) -> vol.Schema:
         """Build the options schema. depending on the selected sensor type."""
-        schema = vol.Schema(CONFIG_SCHEMA)
+        schema = vol.Schema(OPTIONS_SCHEMA)
         data_schema = schema.extend(_get_schema_by_sensor_type(self.sensor_type))
 
         if self.source_entity_id:
