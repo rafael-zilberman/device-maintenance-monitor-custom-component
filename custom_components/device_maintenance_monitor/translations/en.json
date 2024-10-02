@@ -52,7 +52,7 @@
           "min_interval": "The minimum amount of time between each maintenance",
           "max_interval": "The maximum amount of time between each maintenance",
           "is_on_template": "Template to determine if the device is on",
-            "initial_last_maintenance_date": "The date the device was last maintained"
+          "initial_last_maintenance_date": "The date the device was last maintained"
         },
         "title": "Create a runtime maintenance monitor"
       },
@@ -73,7 +73,7 @@
           "min_interval": "The minimum amount of time between each maintenance",
           "max_interval": "The maximum amount of time between each maintenance",
           "is_on_template": "Template to determine if the device is on",
-            "initial_last_maintenance_date": "The date the device was last maintained"
+          "initial_last_maintenance_date": "The date the device was last maintained"
         },
         "title": "Create a power on count maintenance monitor"
       },
@@ -129,15 +129,15 @@
           "description": "The date the device was last maintained"
         }
       }
-    }
-  },
-  "update_maintenance_info": {
-    "name": "Update maintenance info",
-    "description": "Update the maintenance info of the device.",
-    "fields": {
-      "last_maintenance_date": {
-        "name": "Last maintenance date",
-        "description": "The date the device was last maintained"
+    },
+    "update_maintenance_info": {
+      "name": "Update maintenance info",
+      "description": "Update the maintenance info of the device.",
+      "fields": {
+        "last_maintenance_date": {
+          "name": "Last maintenance date",
+          "description": "The date the device was last maintained"
+        }
       }
     }
   }
