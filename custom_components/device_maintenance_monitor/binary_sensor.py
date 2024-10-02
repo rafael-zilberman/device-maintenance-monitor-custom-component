@@ -3,6 +3,8 @@ from dataclasses import dataclass
 from datetime import datetime
 import logging
 
+import voluptuous as vol
+
 from homeassistant.components.binary_sensor import (
     BinarySensorDeviceClass,
     BinarySensorEntity,
@@ -10,7 +12,7 @@ from homeassistant.components.binary_sensor import (
 )
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.core import Event, HomeAssistant, callback
-from homeassistant.helpers import entity_platform, start
+from homeassistant.helpers import entity_platform, selector, start
 from homeassistant.helpers.dispatcher import (
     async_dispatcher_connect,
     async_dispatcher_send,
@@ -23,10 +25,13 @@ from homeassistant.helpers.restore_state import RestoredExtraData, RestoreEntity
 
 from .common import SourceEntity, create_source_entity, generate_sensor_entity_id
 from .const import (
+    DATE_FORMAT,
     DOMAIN,
     ENTITY_BINARY_SENSOR_KEY,
     ENTITY_BINARY_SENSOR_TRANSLATION_KEY,
     SERVICE_RESET_MAINTENANCE,
+    SERVICE_RESET_MAINTENANCE_LAST_MAINTENANCE_DATE,
+    SERVICE_UPDATE_MAINTENANCE_INFO,
     SIGNAL_SENSOR_STATE_CHANGE,
 )
 from .device_binding import get_device_info
@@ -41,8 +46,17 @@ def register_entity_services() -> None:
     platform = entity_platform.async_get_current_platform()
     platform.async_register_entity_service(
         SERVICE_RESET_MAINTENANCE,
-        {},
+        {
+            vol.Optional(SERVICE_RESET_MAINTENANCE_LAST_MAINTENANCE_DATE): selector.DateSelector()
+        },
         "async_reset",
+    )
+    platform.async_register_entity_service(
+        SERVICE_UPDATE_MAINTENANCE_INFO,
+        {
+            vol.Required(SERVICE_RESET_MAINTENANCE_LAST_MAINTENANCE_DATE): selector.DateSelector()
+        },
+        "async_update_state",
     )
 
 
@@ -245,16 +259,41 @@ class MaintenanceNeededBinarySensorEntity(BinarySensorEntity, RestoreEntity):
         return RestoredExtraData(self._logic.get_state())
 
     @callback
-    def async_reset(self):
+    def async_reset(self, last_maintenance_date: str | None = None):
         """Handle the reset of the binary sensor."""
         _LOGGER.info(
-            "Resetting entity '%s' for device '%s'",
+            "Resetting entity '%s' for device '%s' with last maintenance date: %s",
             self.entity_id,
-            self._logic.source_entity_id
+            self._logic.source_entity_id,
+            last_maintenance_date
         )
 
+        if last_maintenance_date:
+            last_maintenance_date_parsed = datetime.strptime(last_maintenance_date, DATE_FORMAT)
+        else:
+            last_maintenance_date_parsed = None
         # Reset the device maintenance monitor metrics
-        self._logic.reset()
+        self._logic.reset(last_maintenance_date_parsed)
+        self.async_write_ha_state()
+
+        # Notify all sensors to update its state
+        async_dispatcher_send(self.hass, SIGNAL_SENSOR_STATE_CHANGE)
+
+    @callback
+    def async_update_state(self, last_maintenance_date: str):
+        """Handle the update of the binary sensor."""
+        _LOGGER.info(
+            "Updating entity '%s' for device '%s' with last maintenance date: %s",
+            self.entity_id,
+            self._logic.source_entity_id,
+            last_maintenance_date
+        )
+
+        last_maintenance_date_parsed = datetime.strptime(last_maintenance_date, DATE_FORMAT)
+        # Update the device maintenance monitor state
+        self._logic.update_state(
+            last_maintenance_date=last_maintenance_date_parsed,
+        )
         self.async_write_ha_state()
 
         # Notify all sensors to update its state

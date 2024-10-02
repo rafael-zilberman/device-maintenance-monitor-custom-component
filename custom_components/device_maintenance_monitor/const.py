@@ -24,18 +24,24 @@ DEFAULT_ON_STATES: Final = [
 CONF_IS_ON_TEMPLATE: Final = "is_on_template"
 CONF_MIN_INTERVAL: Final = "min_interval"
 CONF_MAX_INTERVAL: Final = "max_interval"
+CONFIG_INITIAL_LAST_MAINTENANCE_DATE: Final = "initial_last_maintenance_date"
 
 # Events
 SIGNAL_SENSOR_STATE_CHANGE: Final = "device_maintenance_monitor_sensor_state_change"
 
 # States
 STATE_LAST_MAINTENANCE_DATE: Final = "last_maintenance_date"
+STATE_LAST_RESET_DATE: Final = "last_reset_date"
 STATE_PREDICTED_MAINTENANCE_DATE: Final = "predicted_maintenance_date"
 STATE_DEVICE_TURN_ON_COUNT: Final = "device_turn_on_count"
 STATE_RUNTIME_DURATION: Final = "runtime_duration"
 
 # Services
 SERVICE_RESET_MAINTENANCE: Final = "reset_maintenance"
+SERVICE_UPDATE_MAINTENANCE_INFO: Final = "update_maintenance_info"
+
+# Services fields
+SERVICE_RESET_MAINTENANCE_LAST_MAINTENANCE_DATE: Final = "last_maintenance_date"
 
 # Entities
 ENTITY_BINARY_SENSOR_KEY: Final = "maintenance_needed"

@@ -5,3 +5,26 @@ reset_maintenance:
     entity:
       integration: device_maintenance_monitor
       domain: binary_sensor
+  fields:
+    last_maintenance_date:
+      name: Last Maintenance Date
+      description: The last maintenance date
+      example: "2022-01-01"
+      required: false
+      selector:
+        date:
+update_maintenance_info:
+  name: Update Maintenance Info
+  description: Update the maintenance info for a device
+  target:
+    entity:
+      integration: device_maintenance_monitor
+      domain: binary_sensor
+  fields:
+    last_maintenance_date:
+      name: Last Maintenance Date
+      description: The last maintenance date
+      example: "2022-01-01"
+      required: true
+      selector:
+        date:
