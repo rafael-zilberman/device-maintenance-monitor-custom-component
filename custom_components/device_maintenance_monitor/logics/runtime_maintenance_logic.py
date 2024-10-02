@@ -102,13 +102,14 @@ class RuntimeMaintenanceLogic(MaintenanceLogic):
         """
         _LOGGER.info(
             "Checking if maintenance is needed for device '%s', Runtime duration: %s, Min interval: %s, Max interval: "
-            "%s, Interval: %s, Last Maintenance Date: %s",
+            "%s, Interval: %s, Last Maintenance Date: %s, Last Reset Date: %s",
             self._name,
             self._runtime_duration,
             self._min_interval,
             self._max_interval,
             self._interval,
             self._last_maintenance_date,
+            self._last_reset_date,
         )
         now = datetime.now()
 
@@ -157,16 +158,16 @@ class RuntimeMaintenanceLogic(MaintenanceLogic):
 
         :return: The predicted maintenance date.
         """
-        if self._last_maintenance_date is None:
+        if self._last_reset_date is None:
             return None
 
         # TODO: move to consts
         now = datetime.now()
-        days_since_last_maintenance = (now - self._last_maintenance_date).total_seconds() / 86400
-        if days_since_last_maintenance == 0:
+        days_since_last_reset = (now - self._last_reset_date).total_seconds() / 86400
+        if days_since_last_reset == 0:
             return None
 
-        average_runtime_per_day = self._runtime_duration / days_since_last_maintenance
+        average_runtime_per_day = self._runtime_duration / days_since_last_reset
         if not average_runtime_per_day:
             # Avoid division by zero
             return None

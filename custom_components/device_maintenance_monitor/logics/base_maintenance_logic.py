@@ -8,6 +8,7 @@ from typing import final
 from ..const import (
     DATE_FORMAT,
     STATE_LAST_MAINTENANCE_DATE,
+    STATE_LAST_RESET_DATE,
     STATE_PREDICTED_MAINTENANCE_DATE,
 )
 
@@ -42,6 +43,7 @@ class MaintenanceLogic(ABC):
         self._is_on_expression = is_on_expression
 
         self._last_maintenance_date = datetime.now()  # The date of the last maintenance
+        self._last_reset_date = datetime.now()  # The date of the last reset
         self._last_state_on = False  # The state of the device during the last update
 
     @classmethod
@@ -59,10 +61,14 @@ class MaintenanceLogic(ABC):
         return self._entity_id
 
     @final
-    def reset(self):
+    def reset(self, last_maintenance_date: datetime | None = None):
         """Reset the last maintenance date to the current date."""
-        self._last_maintenance_date = datetime.now()  # TODO: move defaults to consts
+        if last_maintenance_date:
+            self._last_maintenance_date = last_maintenance_date
+        else:
+            self._last_maintenance_date = datetime.now()
 
+        self._last_reset_date = datetime.now()
         self._reset()
 
     def _reset(self):
@@ -146,6 +152,9 @@ class MaintenanceLogic(ABC):
         state[STATE_LAST_MAINTENANCE_DATE] = self._last_maintenance_date.strftime(
             DATE_FORMAT
         )
+        state[STATE_LAST_RESET_DATE] = self._last_reset_date.strftime(
+            DATE_FORMAT
+        )
         if self.is_maintenance_needed:
             state[STATE_PREDICTED_MAINTENANCE_DATE] = datetime.now().strftime(DATE_FORMAT)
         elif self.predicted_maintenance_date:
@@ -172,6 +181,14 @@ class MaintenanceLogic(ABC):
             self._last_maintenance_date = datetime.strptime(
                 last_maintenance_date, DATE_FORMAT
             )
+        last_reset_date = state.get(STATE_LAST_RESET_DATE)
+        if last_reset_date:
+            self._last_reset_date = datetime.strptime(
+                last_reset_date, DATE_FORMAT
+            )
+        else:
+            # Backward compatibility, set the last reset date to the last maintenance date
+            self._last_reset_date = self._last_maintenance_date
         self._restore_state(state)
 
     def _restore_state(self, state: dict[str, str]):
@@ -210,3 +227,9 @@ class MaintenanceLogic(ABC):
     def logic_type(self) -> str:
         """Return the type of the logic."""
         return self.__class__.__name__
+
+    @final
+    def update_state(self, last_maintenance_date: datetime | None = None):
+        """Update the state of the device."""
+        if last_maintenance_date:
+            self._last_maintenance_date = last_maintenance_date

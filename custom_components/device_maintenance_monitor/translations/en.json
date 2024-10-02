@@ -41,14 +41,16 @@
           "name": "Name",
           "interval": "Interval",
           "min_interval": "Minimum Interval",
-          "max_interval": "Maximum Interval"
+          "max_interval": "Maximum Interval",
+          "is_on_template": "Is on template"
         },
         "data_description": {
           "entity_id": "Entity the maintenance monitor is tracking, the maintenance monitor will listen to state changes of this entity to be updated",
           "name": "Leaving blank will take the name from the source entity",
           "interval": "The amount of time the device has been powered on between each maintenance",
           "min_interval": "The minimum amount of time between each maintenance",
-          "max_interval": "The maximum amount of time between each maintenance"
+          "max_interval": "The maximum amount of time between each maintenance",
+          "is_on_template": "Template to determine if the device is on"
         },
         "title": "Create a runtime maintenance monitor"
       },
@@ -56,12 +58,18 @@
         "data": {
           "entity_id": "Source entity",
           "name": "Name",
-          "count": "Count"
+          "count": "Count",
+          "min_interval": "Minimum Interval",
+          "max_interval": "Maximum Interval",
+          "is_on_template": "Is on template"
         },
         "data_description": {
           "entity_id": "Entity the maintenance monitor is tracking, the maintenance monitor will listen to state changes of this entity to be updated",
           "name": "Leaving blank will take the name from the source entity",
-          "count": "The amount of actions on counts between each maintenance"
+          "count": "The amount of actions on counts between each maintenance",
+          "min_interval": "The minimum amount of time between each maintenance",
+          "max_interval": "The maximum amount of time between each maintenance",
+          "is_on_template": "Template to determine if the device is on"
         },
         "title": "Create a power on count maintenance monitor"
       },
