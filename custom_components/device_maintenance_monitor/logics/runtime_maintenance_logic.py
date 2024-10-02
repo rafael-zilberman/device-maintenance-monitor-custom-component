@@ -10,6 +10,7 @@ from ..const import (
     CONF_MIN_INTERVAL,
     CONF_NAME,
     CONF_ON_STATES,
+    CONFIG_INITIAL_LAST_MAINTENANCE_DATE,
     DEFAULT_ON_STATES,
     DEFAULT_RUNTIME_UPDATE_FREQUENCY,
     STATE_RUNTIME_DURATION,
@@ -33,7 +34,8 @@ class RuntimeMaintenanceLogic(MaintenanceLogic):
                  max_interval: timedelta | None,
                  entity_id: str | None,
                  on_states: list[str] | None,
-                 is_on_expression: IsOnExpression | None):
+                 is_on_expression: IsOnExpression | None,
+                 initial_last_maintenance_date: datetime | None = None):
         """Initialize a new instance of the MaintenanceLogic class.
 
         :param name: The name of the entity.
@@ -43,12 +45,14 @@ class RuntimeMaintenanceLogic(MaintenanceLogic):
         :param entity_id: The unique identifier of the source entity.
         :param on_states: The states in which the device is considered to be "on".
         :param is_on_expression: The expression to determine if the device is on.
+        :param initial_last_maintenance_date: The initial last maintenance date.
         """
         super().__init__(
             name=name,
             entity_id=entity_id,
             on_states=on_states,
             is_on_expression=is_on_expression,
+            initial_last_maintenance_date=initial_last_maintenance_date,
         )
         self._interval = interval
         self._min_interval = min_interval
@@ -72,6 +76,7 @@ class RuntimeMaintenanceLogic(MaintenanceLogic):
             entity_id=config.get(CONF_ENTITY_ID),
             on_states=config.get(CONF_ON_STATES) or DEFAULT_ON_STATES,
             is_on_expression=config.get(CONF_IS_ON_TEMPLATE),
+            initial_last_maintenance_date=config.get(CONFIG_INITIAL_LAST_MAINTENANCE_DATE),
         )
 
     def _reset(self):
@@ -102,13 +107,14 @@ class RuntimeMaintenanceLogic(MaintenanceLogic):
         """
         _LOGGER.info(
             "Checking if maintenance is needed for device '%s', Runtime duration: %s, Min interval: %s, Max interval: "
-            "%s, Interval: %s, Last Maintenance Date: %s",
+            "%s, Interval: %s, Last Maintenance Date: %s, Last Reset Date: %s",
             self._name,
             self._runtime_duration,
             self._min_interval,
             self._max_interval,
             self._interval,
             self._last_maintenance_date,
+            self._last_reset_date,
         )
         now = datetime.now()
 
@@ -157,16 +163,16 @@ class RuntimeMaintenanceLogic(MaintenanceLogic):
 
         :return: The predicted maintenance date.
         """
-        if self._last_maintenance_date is None:
+        if self._last_reset_date is None:
             return None
 
         # TODO: move to consts
         now = datetime.now()
-        days_since_last_maintenance = (now - self._last_maintenance_date).total_seconds() / 86400
-        if days_since_last_maintenance == 0:
+        days_since_last_reset = (now - self._last_reset_date).total_seconds() / 86400
+        if days_since_last_reset == 0:
             return None
 
-        average_runtime_per_day = self._runtime_duration / days_since_last_maintenance
+        average_runtime_per_day = self._runtime_duration / days_since_last_reset
         if not average_runtime_per_day:
             # Avoid division by zero
             return None

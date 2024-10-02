@@ -1,4 +1,5 @@
 """The logics module for device maintenance monitor."""
+from datetime import datetime
 import logging
 
 from homeassistant.config_entries import ConfigEntry
@@ -13,6 +14,8 @@ from ..const import (
     CONF_MAX_INTERVAL,
     CONF_MIN_INTERVAL,
     CONF_SENSOR_TYPE,
+    CONFIG_INITIAL_LAST_MAINTENANCE_DATE,
+    DATE_FORMAT,
     SensorType,
 )
 from .base_maintenance_logic import IsOnExpression, MaintenanceLogic
@@ -81,6 +84,13 @@ async def get_maintenance_logic(
     is_on_template_str: str | None = config_data.get(CONF_IS_ON_TEMPLATE)
     if is_on_template_str:
         config_data[CONF_IS_ON_TEMPLATE] = _parse_is_on_template(hass, is_on_template_str)
+
+    # Convert the date string to a datetime object
+    initial_last_maintenance_date_str: str | None = config_data.get(CONFIG_INITIAL_LAST_MAINTENANCE_DATE)
+    if initial_last_maintenance_date_str:
+        config_data[CONFIG_INITIAL_LAST_MAINTENANCE_DATE] = datetime.strptime(
+            initial_last_maintenance_date_str, DATE_FORMAT
+        )
 
     # Get the logic class and create an instance
     logic = IMPLEMENTED_LOGICS.get(sensor_type)
