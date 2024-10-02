@@ -83,6 +83,18 @@ target:
   entity_id: binary_sensor.my_device_maintenance_needed
 ```
 
+### Updating the maintenance info manually
+
+You can update the maintenance data manually by calling the `device_maintenance_monitor.update_maintenance_info` service with the following data:
+
+```yaml
+service: device_maintenance_monitor.update_maintenance_info
+data:
+  last_maintenance_date: 2022-01-01
+target:
+    entity_id: binary_sensor.my_device_maintenance_needed
+```
+
 ### Example Automation
 
 You can create automations based on the entities provided by this integration. For example, send a notification when the device needs maintenance using the Home Assistant "alert" integration:

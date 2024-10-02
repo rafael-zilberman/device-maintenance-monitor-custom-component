@@ -10,8 +10,9 @@ from ..const import (
     CONF_MIN_INTERVAL,
     CONF_NAME,
     CONF_ON_STATES,
+    CONFIG_INITIAL_LAST_MAINTENANCE_DATE,
     DEFAULT_ON_STATES,
-    STATE_DEVICE_TURN_ON_COUNT, CONFIG_INITIAL_LAST_MAINTENANCE_DATE, DATE_FORMAT,
+    STATE_DEVICE_TURN_ON_COUNT,
 )
 from .base_maintenance_logic import IsOnExpression, MaintenanceLogic
 

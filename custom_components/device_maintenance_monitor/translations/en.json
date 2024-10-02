@@ -118,5 +118,27 @@
         }
       }
     }
+  },
+  "services": {
+    "reset_maintenance": {
+      "name": "Reset maintenance",
+      "description": "Reset the maintenance date of the device.",
+      "fields": {
+        "last_maintenance_date": {
+          "name": "Last maintenance date",
+          "description": "The date the device was last maintained"
+        }
+      }
+    }
+  },
+  "update_maintenance_info": {
+    "name": "Update maintenance info",
+    "description": "Update the maintenance info of the device.",
+    "fields": {
+      "last_maintenance_date": {
+        "name": "Last maintenance date",
+        "description": "The date the device was last maintained"
+      }
+    }
   }
 }
